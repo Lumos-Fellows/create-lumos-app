@@ -46,14 +46,20 @@ These match patterns from tripleclone, convexity, and other Lumos Fellows projec
 
 ## Testing
 
-No test framework. To test manually:
+Run the e2e test after making any changes to `src/` or `templates/`:
+
+```bash
+pnpm test
+```
+
+This scaffolds a full Next.js project non-interactively, verifying scaffold → overlay → package install → README generation. CI runs this on Node 18/20/22 via `.github/workflows/ci.yml`.
+
+For manual/interactive testing:
 
 ```bash
 node bin/create-lumos-app.mjs test-app
 # Then: cd test-app && pnpm dev
 ```
-
-For non-interactive testing, import the modules directly and call steps with hardcoded options (see the e2e pattern used during development).
 
 ## Common Tasks
 

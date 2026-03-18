@@ -25,5 +25,8 @@
     "formatter": {
       "enabled": true
     }
+  },
+  "files": {
+    "includes": ["bin/**", "src/**", "test/**", "biome.json", "package.json"]
   }
 }

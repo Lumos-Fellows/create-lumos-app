@@ -10,15 +10,25 @@ export function exec(cmd, opts = {}) {
 }
 
 /**
- * Run a command with inherited stdio (shows output to user).
- * Returns a promise that resolves when the process exits.
+ * Run a command with piped stdio (output hidden behind spinners).
+ * Captures stderr and includes it in the error on failure.
  */
 export function run(cmd, args = [], opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { stdio: "inherit", ...opts });
+    const child = spawn(cmd, args, { stdio: "pipe", ...opts });
+    const chunks = [];
+    child.stderr?.on("data", (chunk) => chunks.push(chunk));
+    child.stdout?.resume();
     child.on("close", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`${cmd} exited with code ${code}`));
+      else {
+        const stderr = Buffer.concat(chunks).toString().trim();
+        reject(
+          new Error(
+            `${cmd} exited with code ${code}${stderr ? `\n${stderr}` : ""}`,
+          ),
+        );
+      }
     });
     child.on("error", reject);
   });
@@ -35,7 +45,7 @@ export function readJson(filePath) {
  * Write an object as formatted JSON.
  */
 export function writeJson(filePath, data) {
-  writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+  writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 /**

@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
+import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
 import { readJson, run, writeJson } from "./utils.mjs";
-import { getIntegrationDeps, getEnvVars } from "./integrations.mjs";
 
 /**
  * Modify package.json, assemble .env.example, and install dependencies.
@@ -30,7 +30,13 @@ export async function setupPackages(projectPath, options) {
   // Collect all deps to install
   const baseDeps =
     framework === "nextjs"
-      ? ["clsx", "tailwind-merge", "class-variance-authority", "@t3-oss/env-nextjs", "zod"]
+      ? [
+          "clsx",
+          "tailwind-merge",
+          "class-variance-authority",
+          "@t3-oss/env-nextjs",
+          "zod",
+        ]
       : ["clsx", "tailwind-merge", "zod"];
 
   const baseDevDeps =
@@ -41,7 +47,7 @@ export async function setupPackages(projectPath, options) {
   const integrationOpts = { supabase, posthog, sentry };
   const { deps: intDeps, devDeps: intDevDeps } = getIntegrationDeps(
     framework,
-    integrationOpts
+    integrationOpts,
   );
 
   const allDeps = [...baseDeps, ...intDeps];
@@ -59,7 +65,9 @@ export async function setupPackages(projectPath, options) {
   if (allDevDeps.length > 0) {
     const devFlag = packageManager === "pnpm" ? "-D" : "--save-dev";
     s.start("Installing dev dependencies…");
-    await run(packageManager, [addArg, devFlag, ...allDevDeps], { cwd: projectPath });
+    await run(packageManager, [addArg, devFlag, ...allDevDeps], {
+      cwd: projectPath,
+    });
     s.stop("Dev dependencies installed");
   }
 
@@ -68,10 +76,10 @@ export async function setupPackages(projectPath, options) {
   if (envVars.length > 0) {
     const envExamplePath = join(projectPath, ".env.example");
     let envContent = readFileSync(envExamplePath, "utf-8");
-    envContent += "\n" + envVars.join("\n") + "\n";
+    envContent += `\n${envVars.join("\n")}\n`;
     writeFileSync(envExamplePath, envContent);
 
     // Also create .env.local with same content for dev convenience
-    writeFileSync(join(projectPath, ".env.local"), envVars.join("\n") + "\n");
+    writeFileSync(join(projectPath, ".env.local"), `${envVars.join("\n")}\n`);
   }
 }

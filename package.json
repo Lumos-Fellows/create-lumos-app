@@ -12,7 +12,11 @@
     "templates/"
   ],
   "scripts": {
-    "start": "node bin/cli.js"
+    "start": "node bin/cli.js",
+    "test": "node --test --test-force-exit test/e2e.test.mjs",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
   },
   "keywords": [
     "create",
@@ -30,5 +34,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.0.0"
   }
 }

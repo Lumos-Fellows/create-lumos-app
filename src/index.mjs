@@ -1,12 +1,12 @@
 import { existsSync } from "node:fs";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { gatherOptions } from "./prompts.mjs";
-import { scaffold } from "./scaffold.mjs";
 import { applyOverlay } from "./overlay.mjs";
 import { setupPackages } from "./packages.mjs";
-import { installSkills } from "./skills.mjs";
+import { gatherOptions } from "./prompts.mjs";
 import { generateReadme } from "./readme.mjs";
+import { scaffold } from "./scaffold.mjs";
+import { installSkills } from "./skills.mjs";
 import { printSuccess } from "./success.mjs";
 import { projectDir } from "./utils.mjs";
 
@@ -20,7 +20,7 @@ export async function main(args) {
     // Check if directory already exists
     if (existsSync(targetDir)) {
       p.log.error(
-        `Directory ${pc.red(options.name)} already exists. Pick a different name or remove it first.`
+        `Directory ${pc.red(options.name)} already exists. Pick a different name or remove it first.`,
       );
       process.exit(1);
     }

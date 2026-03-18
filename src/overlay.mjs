@@ -1,4 +1,10 @@
-import { cpSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { templatesDir } from "./utils.mjs";
 
@@ -43,18 +49,24 @@ function buildTagPatterns(tag) {
     removeSection: [
       new RegExp(
         `^[\\t ]*\\/\\/\\s*--\\s*${tag}_START\\s*--.*?^[\\t ]*\\/\\/\\s*--\\s*${tag}_END\\s*--[\\t ]*\\n?`,
-        "gms"
+        "gms",
       ),
       new RegExp(
         `^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_START\\s*--\\s*\\*\\/\\}?.*?^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_END\\s*--\\s*\\*\\/\\}?[\\t ]*\\n?`,
-        "gms"
+        "gms",
       ),
     ],
     removeMarkers: [
       new RegExp(`^[\\t ]*\\/\\/\\s*--\\s*${tag}_START\\s*--[\\t ]*\\n?`, "gm"),
       new RegExp(`^[\\t ]*\\/\\/\\s*--\\s*${tag}_END\\s*--[\\t ]*\\n?`, "gm"),
-      new RegExp(`^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_START\\s*--\\s*\\*\\/\\}?[\\t ]*\\n?`, "gm"),
-      new RegExp(`^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_END\\s*--\\s*\\*\\/\\}?[\\t ]*\\n?`, "gm"),
+      new RegExp(
+        `^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_START\\s*--\\s*\\*\\/\\}?[\\t ]*\\n?`,
+        "gm",
+      ),
+      new RegExp(
+        `^[\\t ]*\\{?\\/\\*\\s*--\\s*${tag}_END\\s*--\\s*\\*\\/\\}?[\\t ]*\\n?`,
+        "gm",
+      ),
     ],
   };
 }

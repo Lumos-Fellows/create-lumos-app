@@ -23,22 +23,20 @@ export function generateReadme(projectPath, options) {
   if (supabase) {
     envVarDocs.push(
       `| \`${prefix}SUPABASE_URL\` | Your Supabase project URL |`,
-      `| \`${prefix}SUPABASE_ANON_KEY\` | Your Supabase anon/public key |`
+      `| \`${prefix}SUPABASE_ANON_KEY\` | Your Supabase anon/public key |`,
     );
   }
   if (posthog) {
     envVarDocs.push(
       `| \`${prefix}POSTHOG_KEY\` | PostHog project API key (optional) |`,
-      `| \`${prefix}POSTHOG_HOST\` | PostHog instance URL (optional) |`
+      `| \`${prefix}POSTHOG_HOST\` | PostHog instance URL (optional) |`,
     );
   }
   if (sentry) {
-    envVarDocs.push(
-      `| \`${prefix}SENTRY_DSN\` | Sentry DSN (optional) |`
-    );
+    envVarDocs.push(`| \`${prefix}SENTRY_DSN\` | Sentry DSN (optional) |`);
     if (isNext) {
       envVarDocs.push(
-        `| \`SENTRY_AUTH_TOKEN\` | Sentry auth token for source maps (optional) |`
+        `| \`SENTRY_AUTH_TOKEN\` | Sentry auth token for source maps (optional) |`,
       );
     }
   }

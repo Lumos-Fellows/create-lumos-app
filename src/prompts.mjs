@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { validateProjectName, detectPackageManager } from "./utils.mjs";
+import { detectPackageManager, validateProjectName } from "./utils.mjs";
 
 /**
  * Run the interactive prompts and return the user's choices.
@@ -38,8 +38,8 @@ export async function gatherOptions(args) {
         p.select({
           message: "Which framework?",
           options: [
-            { value: "nextjs", label: "Next.js", hint: "Full-stack web app" },
-            { value: "expo", label: "Expo", hint: "React Native mobile app" },
+            { value: "nextjs", label: "Next.js", hint: "web app" },
+            { value: "expo", label: "Expo", hint: "iOS/android app" },
           ],
         }),
 
@@ -51,7 +51,8 @@ export async function gatherOptions(args) {
             {
               value: "pnpm",
               label: "pnpm",
-              hint: detected === "pnpm" ? "recommended, detected" : "recommended",
+              hint:
+                detected === "pnpm" ? "recommended, detected" : "recommended",
             },
             { value: "npm", label: "npm" },
           ],
@@ -87,7 +88,7 @@ export async function gatherOptions(args) {
         p.cancel("Setup cancelled.");
         process.exit(0);
       },
-    }
+    },
   );
 
   return project;

@@ -19,6 +19,6 @@ export function printSuccess(options) {
   p.note(steps.join("\n"), "Next steps");
 
   p.outro(
-    `${pc.green("Done!")} Your ${pc.cyan(isNext ? "Next.js" : "Expo")} app is ready at ${pc.cyan(`./${name}`)}`
+    `${pc.green("Done!")} Your ${pc.cyan(isNext ? "Next.js" : "Expo")} app is ready at ${pc.cyan(`./${name}`)}`,
   );
 }
