@@ -17,7 +17,9 @@
     "test:unit": "node --test test/utils.test.mjs",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
+    "check": "biome check --write .",
+    "prerelease": "pnpm test:unit && pnpm lint",
+    "release": "npm version patch && git push --follow-tags"
   },
   "keywords": [
     "create",
