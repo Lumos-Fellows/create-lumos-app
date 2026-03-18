@@ -1,6 +1,6 @@
 {
   "name": "create-lumos-app",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Scaffolding CLI for Lumos Fellows — create Next.js or Expo apps with best-practice defaults",
   "type": "module",
   "bin": {
