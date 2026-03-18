@@ -26,6 +26,10 @@
     "scaffold",
     "cli"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lumos-fellows/create-lumos-app.git"
+  },
   "author": "Lumos Fellows",
   "license": "MIT",
   "dependencies": {
