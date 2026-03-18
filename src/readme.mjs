@@ -5,7 +5,7 @@ import { join } from "node:path";
  * Generate a README.md for the scaffolded project.
  */
 export function generateReadme(projectPath, options) {
-  const { name, framework, packageManager, supabase, posthog, sentry } =
+  const { name, framework, packageManager, shadcn, supabase, posthog, sentry } =
     options;
 
   const pm = packageManager;
@@ -49,7 +49,7 @@ Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-ap
 
 - **Framework**: ${isNext ? "Next.js (App Router)" : "Expo (React Native)"}
 - **Language**: TypeScript
-- **Styling**: ${isNext ? "Tailwind CSS v4 + shadcn/ui" : "React Native StyleSheet"}
+- **Styling**: ${isNext ? (shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4") : "React Native StyleSheet"}
 - **Linter/Formatter**: Biome
 ${integrations.length > 0 ? `- **Integrations**: ${integrations.join(", ")}` : ""}
 

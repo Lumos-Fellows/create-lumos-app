@@ -12,6 +12,7 @@ import { applyOverlay } from "../src/overlay.mjs";
 import { setupPackages } from "../src/packages.mjs";
 import { generateReadme } from "../src/readme.mjs";
 import { scaffold } from "../src/scaffold.mjs";
+import { installShadcn } from "../src/shadcn.mjs";
 import { projectDir } from "../src/utils.mjs";
 
 // Prevent npx from prompting "Ok to proceed?" when installing packages
@@ -21,11 +22,25 @@ process.env.npm_config_yes = "true";
 
 const cases = [
   {
-    label: "Next.js + Supabase",
+    label: "Next.js + Supabase + shadcn",
     options: {
       name: "test-nextjs-e2e",
       framework: "nextjs",
       packageManager: "pnpm",
+      shadcn: true,
+      supabase: true,
+      posthog: false,
+      sentry: false,
+      skills: false,
+    },
+  },
+  {
+    label: "Next.js + Supabase (no shadcn)",
+    options: {
+      name: "test-nextjs-noshadcn-e2e",
+      framework: "nextjs",
+      packageManager: "pnpm",
+      shadcn: false,
       supabase: true,
       posthog: false,
       sentry: false,
@@ -38,6 +53,7 @@ const cases = [
       name: "test-expo-e2e",
       framework: "expo",
       packageManager: "npm",
+      shadcn: false,
       supabase: true,
       posthog: false,
       sentry: false,
@@ -115,6 +131,37 @@ describe(
             "node_modules should exist",
           );
         });
+
+        if (options.shadcn) {
+          it("installs shadcn/ui components", async () => {
+            await installShadcn(targetDir);
+            assert.ok(
+              existsSync(join(targetDir, "components.json")),
+              "components.json should exist when shadcn is enabled",
+            );
+            assert.ok(
+              existsSync(
+                join(targetDir, "src", "components", "ui", "button.tsx"),
+              ),
+              "button.tsx should exist when shadcn is enabled",
+            );
+          });
+        }
+
+        if (options.framework === "nextjs" && !options.shadcn) {
+          it("does not include shadcn artifacts", () => {
+            assert.ok(
+              !existsSync(join(targetDir, "components.json")),
+              "components.json should not exist when shadcn is disabled",
+            );
+            assert.ok(
+              !existsSync(
+                join(targetDir, "src", "components", "ui", "button.tsx"),
+              ),
+              "button.tsx should not exist when shadcn is disabled",
+            );
+          });
+        }
 
         it("creates .env.local instead of .env.example", () => {
           assert.ok(

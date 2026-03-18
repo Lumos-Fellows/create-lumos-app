@@ -63,6 +63,14 @@ export async function gatherOptions(args) {
         });
       },
 
+      shadcn: ({ results }) =>
+        results.framework === "nextjs"
+          ? p.confirm({
+              message: "Add shadcn/ui components?",
+              initialValue: true,
+            })
+          : Promise.resolve(false),
+
       supabase: () =>
         p.confirm({
           message: "Add Supabase?",

@@ -8,7 +8,8 @@ import { readJson, run, writeJson } from "./utils.mjs";
  * Modify package.json, assemble .env.local, and install dependencies.
  */
 export async function setupPackages(projectPath, options) {
-  const { framework, packageManager, supabase, posthog, sentry } = options;
+  const { framework, packageManager, shadcn, supabase, posthog, sentry } =
+    options;
   const pkgPath = join(projectPath, "package.json");
   const pkg = readJson(pkgPath);
 
@@ -30,21 +31,12 @@ export async function setupPackages(projectPath, options) {
   // Collect all deps to install
   const baseDeps =
     framework === "nextjs"
-      ? [
-          "clsx",
-          "tailwind-merge",
-          "class-variance-authority",
-          "@t3-oss/env-nextjs",
-          "zod",
-        ]
+      ? ["clsx", "tailwind-merge", "@t3-oss/env-nextjs", "zod"]
       : ["clsx", "tailwind-merge", "zod"];
 
-  const baseDevDeps =
-    framework === "nextjs"
-      ? ["@biomejs/biome", "@radix-ui/react-slot"]
-      : ["@biomejs/biome"];
+  const baseDevDeps = ["@biomejs/biome"];
 
-  const integrationOpts = { supabase, posthog, sentry };
+  const integrationOpts = { shadcn, supabase, posthog, sentry };
   const { deps: intDeps, devDeps: intDevDeps } = getIntegrationDeps(
     framework,
     integrationOpts,

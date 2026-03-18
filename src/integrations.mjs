@@ -3,6 +3,10 @@
  */
 
 const nextjsDeps = {
+  shadcn: {
+    deps: ["class-variance-authority"],
+    devDeps: ["@radix-ui/react-slot"],
+  },
   supabase: {
     deps: ["@supabase/supabase-js", "@supabase/ssr"],
     devDeps: [],

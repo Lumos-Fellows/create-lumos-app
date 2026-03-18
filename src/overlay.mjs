@@ -14,7 +14,7 @@ import { templatesDir } from "./utils.mjs";
  */
 export function applyOverlay(projectPath, options) {
   const tpl = templatesDir();
-  const { framework, supabase, posthog, sentry } = options;
+  const { framework, shadcn, supabase, posthog, sentry } = options;
 
   // 1. Copy shared templates
   copyDir(join(tpl, "shared"), projectPath);
@@ -26,12 +26,13 @@ export function applyOverlay(projectPath, options) {
   renameSync(join(projectPath, "_biome.json"), join(projectPath, "biome.json"));
 
   // 3. Copy integration overlays
+  if (shadcn) copyDir(join(tpl, framework, "shadcn"), projectPath);
   if (supabase) copyDir(join(tpl, framework, "supabase"), projectPath);
   if (posthog) copyDir(join(tpl, framework, "posthog"), projectPath);
   if (sentry) copyDir(join(tpl, framework, "sentry"), projectPath);
 
   // 4. Strip conditional sections from all .ts/.tsx files
-  const integrations = { supabase, posthog, sentry };
+  const integrations = { shadcn, supabase, posthog, sentry };
   stripConditionals(projectPath, integrations);
 }
 

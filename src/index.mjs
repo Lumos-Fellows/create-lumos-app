@@ -6,6 +6,7 @@ import { setupPackages } from "./packages.mjs";
 import { gatherOptions } from "./prompts.mjs";
 import { generateReadme } from "./readme.mjs";
 import { scaffold } from "./scaffold.mjs";
+import { installShadcn } from "./shadcn.mjs";
 import { installSkills } from "./skills.mjs";
 import { printSuccess } from "./success.mjs";
 import { isCurrentDir, projectDir } from "./utils.mjs";
@@ -37,16 +38,21 @@ export async function main(args) {
     // 4. Modify package.json, install deps, assemble .env
     await setupPackages(targetDir, options);
 
-    // 5. Install developer skills (if opted in)
+    // 5. Install shadcn/ui components (if opted in)
+    if (options.framework === "nextjs" && options.shadcn) {
+      await installShadcn(targetDir);
+    }
+
+    // 6. Install developer skills (if opted in)
     if (options.skills) {
       await installSkills(targetDir);
     }
 
-    // 6. Generate README
+    // 7. Generate README
     generateReadme(targetDir, options);
     p.log.success("README.md generated");
 
-    // 7. Print success
+    // 8. Print success
     printSuccess(options);
   } catch (err) {
     p.log.error(err.message);
