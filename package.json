@@ -1,0 +1,34 @@
+{
+  "name": "create-lumos-app",
+  "version": "0.1.0",
+  "description": "Scaffolding CLI for Lumos Fellows — create Next.js or Expo apps with best-practice defaults",
+  "type": "module",
+  "bin": {
+    "create-lumos-app": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "templates/"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js"
+  },
+  "keywords": [
+    "create",
+    "lumos",
+    "nextjs",
+    "expo",
+    "scaffold",
+    "cli"
+  ],
+  "author": "Lumos Fellows",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "picocolors": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
