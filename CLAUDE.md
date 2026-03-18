@@ -46,13 +46,21 @@ These match patterns from tripleclone, convexity, and other Lumos Fellows projec
 
 ## Testing
 
-Run the e2e test after making any changes to `src/` or `templates/`:
+**Always run tests after changing `src/` or `templates/`.**
+
+Unit tests (fast, run first):
+
+```bash
+pnpm test:unit
+```
+
+E2E tests (scaffolds real projects, slow):
 
 ```bash
 pnpm test
 ```
 
-This scaffolds a full Next.js project non-interactively, verifying scaffold → overlay → package install → README generation. CI runs this on Node 18/20/22 via `.github/workflows/ci.yml`.
+The e2e test scaffolds full Next.js and Expo projects non-interactively, verifying scaffold → overlay → package install → README generation. CI runs this on Node 18/20/22 via `.github/workflows/ci.yml`.
 
 For manual/interactive testing:
 

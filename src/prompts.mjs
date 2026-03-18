@@ -19,16 +19,20 @@ export async function gatherOptions(args) {
           if (err) {
             p.log.warn(`Invalid project name "${nameFromArg}": ${err}`);
             return p.text({
-              message: "Project name",
+              message: 'Project name (use "." for current directory)',
               placeholder: "my-lumos-app",
               validate: validateProjectName,
             });
           }
-          p.log.info(`Project name: ${pc.cyan(nameFromArg)}`);
+          if (nameFromArg === ".") {
+            p.log.info(`Scaffolding in ${pc.cyan("current directory")}`);
+          } else {
+            p.log.info(`Project name: ${pc.cyan(nameFromArg)}`);
+          }
           return Promise.resolve(nameFromArg);
         }
         return p.text({
-          message: "Project name",
+          message: 'Project name (use "." for current directory)',
           placeholder: "my-lumos-app",
           validate: validateProjectName,
         });

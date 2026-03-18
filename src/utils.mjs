@@ -65,15 +65,25 @@ export function detectPackageManager() {
  */
 export function validateProjectName(name) {
   if (!name) return "Project name is required";
+  if (name === ".") return undefined;
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name))
-    return "Name must be lowercase, alphanumeric, and hyphens only (must start with letter or number)";
+    return 'Name must be lowercase, alphanumeric, and hyphens only (must start with letter or number), or "." to use the current directory';
   return undefined;
 }
 
 /**
+ * Check if the name means "use the current directory".
+ */
+export function isCurrentDir(name) {
+  return name === ".";
+}
+
+/**
  * Resolve the full path for the new project.
+ * "." means scaffold into the current working directory.
  */
 export function projectDir(name) {
+  if (isCurrentDir(name)) return process.cwd();
   return join(process.cwd(), name);
 }
 

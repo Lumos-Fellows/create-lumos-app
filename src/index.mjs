@@ -8,7 +8,7 @@ import { generateReadme } from "./readme.mjs";
 import { scaffold } from "./scaffold.mjs";
 import { installSkills } from "./skills.mjs";
 import { printSuccess } from "./success.mjs";
-import { projectDir } from "./utils.mjs";
+import { isCurrentDir, projectDir } from "./utils.mjs";
 
 export async function main(args) {
   try {
@@ -17,8 +17,8 @@ export async function main(args) {
 
     const targetDir = projectDir(options.name);
 
-    // Check if directory already exists
-    if (existsSync(targetDir)) {
+    // Check if directory already exists (skip for "." — user intends to use cwd)
+    if (!isCurrentDir(options.name) && existsSync(targetDir)) {
       p.log.error(
         `Directory ${pc.red(options.name)} already exists. Pick a different name or remove it first.`,
       );

@@ -14,6 +14,7 @@
   "scripts": {
     "start": "node bin/cli.js",
     "test": "node --test --test-force-exit test/e2e.test.mjs",
+    "test:unit": "node --test test/utils.test.mjs",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write ."
@@ -41,5 +42,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.29.3+sha256.a74f4dbd3f5a7ca874d004135271f0b697b683bf1fd2fc2133961161cd25b29c"
 }
