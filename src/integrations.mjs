@@ -54,7 +54,7 @@ export function getIntegrationDeps(framework, options) {
 }
 
 /**
- * Get env vars for .env.example based on framework and integrations.
+ * Get env vars for .env.local based on framework and integrations.
  */
 export function getEnvVars(framework, options) {
   const vars = [];

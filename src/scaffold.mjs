@@ -17,7 +17,7 @@ export async function scaffold(options) {
       name,
       "--app",
       "--tailwind",
-      "--eslint",
+      "--no-eslint",
       "--src-dir",
       "--import-alias",
       "~/*",

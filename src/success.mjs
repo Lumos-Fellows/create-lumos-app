@@ -13,7 +13,6 @@ export function printSuccess(options) {
 
   const steps = [
     ...(inPlace ? [] : [`cd ${name}`]),
-    "cp .env.example .env.local",
     "# Fill in your env vars in .env.local",
     isNext ? `${pm === "pnpm" ? "pnpm" : "npm run"} dev` : "npx expo start",
   ];

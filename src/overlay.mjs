@@ -2,6 +2,7 @@ import {
   cpSync,
   readdirSync,
   readFileSync,
+  renameSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -20,6 +21,9 @@ export function applyOverlay(projectPath, options) {
 
   // 2. Copy framework base
   copyDir(join(tpl, framework, "base"), projectPath);
+
+  // 2b. Rename _biome.json → biome.json (prefixed to avoid Biome config discovery in this repo)
+  renameSync(join(projectPath, "_biome.json"), join(projectPath, "biome.json"));
 
   // 3. Copy integration overlays
   if (supabase) copyDir(join(tpl, framework, "supabase"), projectPath);

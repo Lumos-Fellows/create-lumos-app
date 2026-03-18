@@ -5,7 +5,7 @@ import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
 import { readJson, run, writeJson } from "./utils.mjs";
 
 /**
- * Modify package.json, assemble .env.example, and install dependencies.
+ * Modify package.json, assemble .env.local, and install dependencies.
  */
 export async function setupPackages(projectPath, options) {
   const { framework, packageManager, supabase, posthog, sentry } = options;
@@ -71,15 +71,12 @@ export async function setupPackages(projectPath, options) {
     s.stop("Dev dependencies installed");
   }
 
-  // Assemble .env.example
+  // Append integration env vars to .env.local
   const envVars = getEnvVars(framework, integrationOpts);
   if (envVars.length > 0) {
-    const envExamplePath = join(projectPath, ".env.example");
-    let envContent = readFileSync(envExamplePath, "utf-8");
+    const envLocalPath = join(projectPath, ".env.local");
+    let envContent = readFileSync(envLocalPath, "utf-8");
     envContent += `\n${envVars.join("\n")}\n`;
-    writeFileSync(envExamplePath, envContent);
-
-    // Also create .env.local with same content for dev convenience
-    writeFileSync(join(projectPath, ".env.local"), `${envVars.join("\n")}\n`);
+    writeFileSync(envLocalPath, envContent);
   }
 }

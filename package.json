@@ -14,10 +14,10 @@
   "scripts": {
     "start": "node bin/cli.js",
     "test": "node --test --test-force-exit test/e2e.test.mjs",
-    "test:unit": "node --test test/utils.test.mjs",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
+    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs",
+    "lint": "biome lint bin src test",
+    "format": "biome format --write bin src test biome.json package.json",
+    "check": "biome check --write bin src test",
     "prerelease": "pnpm test:unit && pnpm lint",
     "release": "npm version patch && git push --follow-tags && npm publish --access public"
   },

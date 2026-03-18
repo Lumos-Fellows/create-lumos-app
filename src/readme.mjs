@@ -59,8 +59,8 @@ ${integrations.length > 0 ? `- **Integrations**: ${integrations.join(", ")}` : "
 # Install dependencies
 ${pm} install
 
-# Copy env vars and fill in your values
-cp .env.example .env.local
+# Fill in your env vars
+$EDITOR .env.local
 
 # Start the dev server
 ${devCmd}
@@ -74,7 +74,7 @@ ${
 |----------|-------------|
 ${envVarDocs.join("\n")}
 
-Copy \`.env.example\` to \`.env.local\` and fill in your values. The app validates env vars at startup via Zod — missing required vars will throw a clear error.
+Fill in your values in \`.env.local\`. The app validates env vars at startup via Zod — missing required vars will throw a clear error.
 `
     : ""
 }

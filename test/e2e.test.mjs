@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert/strict";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { applyOverlay } from "../src/overlay.mjs";
@@ -82,6 +82,32 @@ describe(
           applyOverlay(targetDir, options);
         });
 
+        it("does not include eslint config", () => {
+          assert.ok(
+            !existsSync(join(targetDir, "eslint.config.mjs")),
+            "eslint.config.mjs should not exist (we use Biome)",
+          );
+          assert.ok(
+            !existsSync(join(targetDir, ".eslintrc.json")),
+            ".eslintrc.json should not exist (we use Biome)",
+          );
+        });
+
+        it("uses non-deprecated Biome VS Code settings", () => {
+          const vscodePath = join(targetDir, ".vscode", "settings.json");
+          if (existsSync(vscodePath)) {
+            const content = readFileSync(vscodePath, "utf-8");
+            assert.ok(
+              !content.includes("quickfix.biome"),
+              "should not use deprecated quickfix.biome",
+            );
+            assert.ok(
+              content.includes("source.fixAll.biome"),
+              "should use source.fixAll.biome instead",
+            );
+          }
+        });
+
         it("installs packages", async () => {
           await setupPackages(targetDir, options);
           assert.ok(
@@ -90,11 +116,27 @@ describe(
           );
         });
 
+        it("creates .env.local instead of .env.example", () => {
+          assert.ok(
+            existsSync(join(targetDir, ".env.local")),
+            ".env.local should exist",
+          );
+          assert.ok(
+            !existsSync(join(targetDir, ".env.example")),
+            ".env.example should not exist",
+          );
+        });
+
         it("generates README", () => {
           generateReadme(targetDir, options);
           assert.ok(
             existsSync(join(targetDir, "README.md")),
             "README.md should exist",
+          );
+          const readme = readFileSync(join(targetDir, "README.md"), "utf-8");
+          assert.ok(
+            !readme.includes("cp .env.example"),
+            "README should not reference .env.example",
           );
         });
       });
