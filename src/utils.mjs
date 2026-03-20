@@ -1,11 +1,19 @@
 import { execSync, spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+export const DEBUG_MODE = false;
+
+function debug(...args) {
+  if (DEBUG_MODE) console.log("[DEBUG]", ...args);
+}
 
 /**
  * Run a command synchronously and return stdout.
  */
 export function exec(cmd, opts = {}) {
+  debug(`exec: ${cmd}`);
   return execSync(cmd, { encoding: "utf-8", stdio: "pipe", ...opts }).trim();
 }
 
@@ -15,11 +23,21 @@ export function exec(cmd, opts = {}) {
  */
 export function run(cmd, args = [], opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { stdio: "pipe", ...opts });
+    const spawnOpts = { stdio: "pipe", shell: true, ...opts };
+    debug(`run: ${cmd} ${args.join(" ")}`);
+    debug(`  cwd: ${spawnOpts.cwd || process.cwd()}`);
+    debug(`  shell: ${spawnOpts.shell}`);
+    const child = spawn(cmd, args, spawnOpts);
     const chunks = [];
-    child.stderr?.on("data", (chunk) => chunks.push(chunk));
-    child.stdout?.resume();
+    child.stderr?.on("data", (chunk) => {
+      debug(`  stderr: ${chunk.toString().trim()}`);
+      chunks.push(chunk);
+    });
+    child.stdout?.on("data", (chunk) => {
+      debug(`  stdout: ${chunk.toString().trim()}`);
+    });
     child.on("close", (code) => {
+      debug(`  exit code: ${code}`);
       if (code === 0) resolve();
       else {
         const stderr = Buffer.concat(chunks).toString().trim();
@@ -30,7 +48,10 @@ export function run(cmd, args = [], opts = {}) {
         );
       }
     });
-    child.on("error", reject);
+    child.on("error", (err) => {
+      debug(`  spawn error: ${err.message}`);
+      reject(err);
+    });
   });
 }
 
@@ -91,5 +112,6 @@ export function projectDir(name) {
  * Get the templates directory (relative to this file).
  */
 export function templatesDir() {
-  return new URL("../templates", import.meta.url).pathname;
+  const thisFile = fileURLToPath(import.meta.url);
+  return join(dirname(thisFile), "..", "templates");
 }
