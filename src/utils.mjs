@@ -23,7 +23,7 @@ export function exec(cmd, opts = {}) {
  */
 export function run(cmd, args = [], opts = {}) {
   return new Promise((resolve, reject) => {
-    const spawnOpts = { stdio: "pipe", shell: true, ...opts };
+    const spawnOpts = { stdio: "pipe", shell: process.platform === "win32", ...opts };
     debug(`run: ${cmd} ${args.join(" ")}`);
     debug(`  cwd: ${spawnOpts.cwd || process.cwd()}`);
     debug(`  shell: ${spawnOpts.shell}`);
