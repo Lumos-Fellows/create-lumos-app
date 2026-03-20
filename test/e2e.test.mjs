@@ -290,6 +290,7 @@ describe(
             execFileSync(tscBin, ["--noEmit"], {
               cwd: targetDir,
               stdio: "pipe",
+              shell: process.platform === "win32",
             });
           } catch (err) {
             assert.fail(
@@ -306,6 +307,7 @@ describe(
             execFileSync(biomeBin, ["lint", "."], {
               cwd: targetDir,
               stdio: "pipe",
+              shell: process.platform === "win32",
             });
           } catch (err) {
             assert.fail(
