@@ -1,5 +1,12 @@
 import "@/global.css";
+// -- SENTRY_START --
 import { env } from "@/env";
+// -- SENTRY_END --
+// -- NO_SENTRY_START --
+// -- POSTHOG_START --
+import { env } from "@/env";
+// -- POSTHOG_END --
+// -- NO_SENTRY_END --
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 // -- SENTRY_START --
