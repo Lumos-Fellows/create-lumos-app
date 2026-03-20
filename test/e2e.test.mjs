@@ -105,16 +105,26 @@ const cases = [
 
 // ── tests ────────────────────────────────────────────────────────────────────
 
-const MAX_CONCURRENCY = 5;
-
 const TEST_TIMEOUT = 300_000;
+
+// Group cases by framework so same-framework tests run sequentially
+// (they share the same npx cache and race on it), while different
+// frameworks run in parallel.
+const frameworkGroups = {};
+for (const c of cases) {
+  const fw = c.options.framework;
+  if (!frameworkGroups[fw]) frameworkGroups[fw] = [];
+  frameworkGroups[fw].push(c);
+}
 
 describe(
   "e2e scaffolding",
-  { concurrency: MAX_CONCURRENCY, timeout: TEST_TIMEOUT },
+  { concurrency: Object.keys(frameworkGroups).length, timeout: TEST_TIMEOUT },
   () => {
-    for (const { label, options } of cases) {
-      describe(label, { concurrency: 1 }, () => {
+    for (const [framework, group] of Object.entries(frameworkGroups)) {
+      describe(framework, { concurrency: 1 }, () => {
+        for (const { label, options } of group) {
+          describe(label, { concurrency: 1 }, () => {
         const targetDir = projectDir(options.name);
 
         // clean slate before and after
@@ -315,6 +325,8 @@ describe(
             );
           }
         });
+        });
+      }
       });
     }
   },
