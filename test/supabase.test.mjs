@@ -6,7 +6,6 @@
 
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { join } from "node:path";
 import { describe, it, mock } from "node:test";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -73,7 +72,7 @@ function spawnFails() {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe("initSupabase", () => {
-  it("runs the local supabase binary with init in the project directory", async () => {
+  it("runs npx supabase init in the project directory", async () => {
     resetMocks();
     spawnSucceeds();
 
@@ -81,14 +80,8 @@ describe("initSupabase", () => {
 
     assert.equal(spawnMock.mock.callCount(), 1);
     const [cmd, args, opts] = spawnMock.mock.calls[0].arguments;
-    const expectedBin = join(
-      "/tmp/test-project",
-      "node_modules",
-      ".bin",
-      "supabase",
-    );
-    assert.equal(cmd, expectedBin);
-    assert.deepEqual(args, ["init"]);
+    assert.equal(cmd, "npx");
+    assert.deepEqual(args, ["supabase", "init"]);
     assert.equal(opts.cwd, "/tmp/test-project");
   });
 
