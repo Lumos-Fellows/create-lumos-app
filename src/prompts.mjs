@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { detectPackageManager, validateProjectName } from "./utils.mjs";
+import { detectPackageManager, exec, validateProjectName } from "./utils.mjs";
 
 /**
  * Run the interactive prompts and return the user's choices.
@@ -47,9 +47,9 @@ export async function gatherOptions(args) {
           ],
         }),
 
-      packageManager: () => {
+      packageManager: async () => {
         const detected = detectPackageManager();
-        return p.select({
+        const choice = await p.select({
           message: "Package manager",
           options: [
             {
@@ -61,12 +61,46 @@ export async function gatherOptions(args) {
             { value: "npm", label: "npm" },
           ],
         });
+        if (p.isCancel(choice)) return choice;
+
+        if (choice === "pnpm" && detected !== "pnpm") {
+          const install = await p.confirm({
+            message: "pnpm is not installed. Install it now?",
+            initialValue: true,
+          });
+          if (p.isCancel(install)) return install;
+
+          if (install) {
+            const s = p.spinner();
+            s.start("Installing pnpm…");
+            try {
+              exec("npm install -g pnpm");
+              s.stop("pnpm installed!");
+            } catch {
+              s.stop("Failed to install pnpm — falling back to npm.");
+              return "npm";
+            }
+          } else {
+            p.log.info("Falling back to npm.");
+            return "npm";
+          }
+        }
+
+        return choice;
       },
 
       shadcn: ({ results }) =>
         results.framework === "nextjs"
           ? p.confirm({
               message: "Add shadcn/ui components?",
+              initialValue: true,
+            })
+          : Promise.resolve(false),
+
+      rnr: ({ results }) =>
+        results.framework === "expo"
+          ? p.confirm({
+              message: "Add React Native Reusables components?",
               initialValue: true,
             })
           : Promise.resolve(false),

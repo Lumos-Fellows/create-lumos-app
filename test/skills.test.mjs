@@ -36,13 +36,20 @@ mock.module("@clack/prompts", {
   },
 });
 
-const { installSkills, DEFAULT_SKILLS } = await import("../src/skills.mjs");
+const {
+  installSkills,
+  selectSkills,
+  NEXTJS_SKILLS,
+  EXPO_SKILLS,
+  getSkillsForFramework,
+} = await import("../src/skills.mjs");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resetMocks() {
   spawnMock.mock.resetCalls();
   multiselectMock.mock.resetCalls();
+  spinnerStartMock.mock.resetCalls();
   spinnerStopMock.mock.resetCalls();
 }
 
@@ -72,92 +79,117 @@ function spawnFails() {
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
-describe("DEFAULT_SKILLS", () => {
-  it("contains the three recommended skills", () => {
-    assert.equal(DEFAULT_SKILLS.length, 3);
+describe("NEXTJS_SKILLS", () => {
+  it("contains the three recommended Next.js skills", () => {
+    assert.equal(NEXTJS_SKILLS.length, 3);
 
-    const skills = DEFAULT_SKILLS.map((s) => s.skill);
+    const skills = NEXTJS_SKILLS.map((s) => s.skill);
     assert.ok(skills.includes("vercel-react-best-practices"));
     assert.ok(skills.includes("next-best-practices"));
     assert.ok(skills.includes("skill-creator"));
   });
 });
 
+describe("EXPO_SKILLS", () => {
+  it("contains the two recommended Expo skills", () => {
+    assert.equal(EXPO_SKILLS.length, 2);
+
+    const skills = EXPO_SKILLS.map((s) => s.skill);
+    assert.ok(skills.includes("vercel-react-native-skills"));
+    assert.ok(skills.includes("expo-dev-client"));
+  });
+});
+
+describe("getSkillsForFramework", () => {
+  it("returns Next.js skills for nextjs", () => {
+    assert.equal(getSkillsForFramework("nextjs"), NEXTJS_SKILLS);
+  });
+
+  it("returns Expo skills for expo", () => {
+    assert.equal(getSkillsForFramework("expo"), EXPO_SKILLS);
+  });
+});
+
+describe("selectSkills", () => {
+  it("returns selected skills from multiselect", async () => {
+    resetMocks();
+    multiselectMock.mock.mockImplementation(() =>
+      Promise.resolve(NEXTJS_SKILLS),
+    );
+
+    const result = await selectSkills("nextjs");
+    assert.deepEqual(result, NEXTJS_SKILLS);
+  });
+
+  it("returns null when user cancels", async () => {
+    resetMocks();
+    multiselectMock.mock.mockImplementation(() =>
+      Promise.resolve(Symbol.for("cancel")),
+    );
+
+    const result = await selectSkills("nextjs");
+    assert.equal(result, null);
+  });
+
+  it("returns null when user selects nothing", async () => {
+    resetMocks();
+    multiselectMock.mock.mockImplementation(() => Promise.resolve([]));
+
+    const result = await selectSkills("nextjs");
+    assert.equal(result, null);
+  });
+});
+
 describe("installSkills", () => {
   it("installs each selected skill with correct args", async () => {
     resetMocks();
-    multiselectMock.mock.mockImplementation(() =>
-      Promise.resolve(DEFAULT_SKILLS),
-    );
     spawnSucceeds();
 
-    await installSkills("/tmp/test-project");
+    await installSkills("/tmp/test-project", NEXTJS_SKILLS);
 
     assert.equal(spawnMock.mock.callCount(), 3);
 
-    for (let i = 0; i < DEFAULT_SKILLS.length; i++) {
+    for (let i = 0; i < NEXTJS_SKILLS.length; i++) {
       const [cmd, args, opts] = spawnMock.mock.calls[i].arguments;
       assert.equal(cmd, "npx");
       assert.deepEqual(args, [
         "skills",
         "add",
-        DEFAULT_SKILLS[i].source,
+        NEXTJS_SKILLS[i].source,
         "--skill",
-        DEFAULT_SKILLS[i].skill,
+        NEXTJS_SKILLS[i].skill,
         "-y",
       ]);
       assert.equal(opts.cwd, "/tmp/test-project");
     }
   });
 
-  it("installs only the skills the user selects", async () => {
+  it("installs only the skills passed in", async () => {
     resetMocks();
-    const subset = [DEFAULT_SKILLS[1]];
-    multiselectMock.mock.mockImplementation(() => Promise.resolve(subset));
+    const subset = [NEXTJS_SKILLS[1]];
     spawnSucceeds();
 
-    await installSkills("/tmp/test-project");
+    await installSkills("/tmp/test-project", subset);
 
     assert.equal(spawnMock.mock.callCount(), 1);
     const [, args] = spawnMock.mock.calls[0].arguments;
     assert.deepEqual(args, [
       "skills",
       "add",
-      DEFAULT_SKILLS[1].source,
+      NEXTJS_SKILLS[1].source,
       "--skill",
-      DEFAULT_SKILLS[1].skill,
+      NEXTJS_SKILLS[1].skill,
       "-y",
     ]);
   });
 
-  it("skips installation when user cancels", async () => {
-    resetMocks();
-    multiselectMock.mock.mockImplementation(() =>
-      Promise.resolve(Symbol.for("cancel")),
-    );
-
-    await installSkills("/tmp/test-project");
-
-    assert.equal(spawnMock.mock.callCount(), 0);
-  });
-
-  it("skips installation when user selects nothing", async () => {
-    resetMocks();
-    multiselectMock.mock.mockImplementation(() => Promise.resolve([]));
-
-    await installSkills("/tmp/test-project");
-
-    assert.equal(spawnMock.mock.callCount(), 0);
-  });
-
   it("does not throw when a skill fails to install", async () => {
     resetMocks();
-    multiselectMock.mock.mockImplementation(() =>
-      Promise.resolve(DEFAULT_SKILLS),
-    );
     spawnFails();
 
-    await assert.doesNotReject(() => installSkills("/tmp/test-project"));
+    await assert.doesNotReject(() =>
+      installSkills("/tmp/test-project", NEXTJS_SKILLS),
+    );
 
     // All three were attempted despite failures
     assert.equal(spawnMock.mock.callCount(), 3);
@@ -165,9 +197,6 @@ describe("installSkills", () => {
 
   it("reports which skills failed", async () => {
     resetMocks();
-    multiselectMock.mock.mockImplementation(() =>
-      Promise.resolve(DEFAULT_SKILLS),
-    );
 
     let callIdx = 0;
     spawnMock.mock.mockImplementation(() => {
@@ -181,11 +210,11 @@ describe("installSkills", () => {
       return child;
     });
 
-    await installSkills("/tmp/test-project");
+    await installSkills("/tmp/test-project", NEXTJS_SKILLS);
 
     const stopMsg = spinnerStopMock.mock.calls[0].arguments[0];
     assert.ok(
-      stopMsg.includes(DEFAULT_SKILLS[1].label),
+      stopMsg.includes(NEXTJS_SKILLS[1].label),
       `stop message should mention failed skill: ${stopMsg}`,
     );
   });

@@ -2,10 +2,10 @@ import * as p from "@clack/prompts";
 import { run } from "./utils.mjs";
 
 /**
- * Recommended skills that are selected by default.
+ * Recommended skills per framework.
  * Each entry maps to a `npx skills add <source> --skill <skill> -y` invocation.
  */
-export const DEFAULT_SKILLS = [
+export const NEXTJS_SKILLS = [
   {
     label: "Vercel React Best Practices",
     source: "https://github.com/vercel-labs/agent-skills",
@@ -23,25 +23,53 @@ export const DEFAULT_SKILLS = [
   },
 ];
 
+export const EXPO_SKILLS = [
+  {
+    label: "Vercel React Native Skills",
+    source: "https://github.com/vercel-labs/agent-skills",
+    skill: "vercel-react-native-skills",
+  },
+  {
+    label: "Expo Dev Client",
+    source: "https://github.com/expo/skills",
+    skill: "expo-dev-client",
+  },
+];
+
+/** @param {"nextjs" | "expo"} framework */
+export function getSkillsForFramework(framework) {
+  return framework === "expo" ? EXPO_SKILLS : NEXTJS_SKILLS;
+}
+
 /**
- * Prompt the user to pick which recommended skills to install, then install them.
+ * Prompt the user to pick which skills to install. Call before scaffold.
+ * @returns {import("./skills.mjs").Skill[] | null} selected skills, or null if skipped
  */
-export async function installSkills(projectPath) {
+export async function selectSkills(framework) {
+  const skills = getSkillsForFramework(framework);
   const selected = await p.multiselect({
-    message: "Which developer skills would you like to install?",
-    options: DEFAULT_SKILLS.map((s) => ({
+    message:
+      "Which developer skills would you like to install? (space to toggle, enter to confirm)",
+    options: skills.map((s) => ({
       value: s,
       label: s.label,
       hint: `${s.source} → ${s.skill}`,
     })),
-    initialValues: [...DEFAULT_SKILLS],
+    initialValues: skills,
   });
 
   if (p.isCancel(selected) || selected.length === 0) {
     p.log.info("Skipping skills installation");
-    return;
+    return null;
   }
 
+  return selected;
+}
+
+/**
+ * Install previously selected skills.
+ */
+export async function installSkills(projectPath, selected) {
   const s = p.spinner();
   s.start("Installing developer skills…");
 
@@ -55,14 +83,19 @@ export async function installSkills(projectPath) {
           cwd: projectPath,
         },
       );
-    } catch {
-      failed.push(entry.label);
+    } catch (err) {
+      failed.push({ label: entry.label, error: err.message });
     }
   }
 
   if (failed.length === 0) {
     s.stop(`${selected.length} developer skill(s) installed`);
   } else {
-    s.stop(`Skills installed (${failed.join(", ")} failed)`);
+    s.stop(
+      `Skills installed (${failed.map((f) => f.label).join(", ")} failed)`,
+    );
+    for (const f of failed) {
+      p.log.warn(`${f.label}: ${f.error}`);
+    }
   }
 }

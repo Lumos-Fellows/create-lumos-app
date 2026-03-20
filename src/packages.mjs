@@ -8,7 +8,7 @@ import { readJson, run, writeJson } from "./utils.mjs";
  * Modify package.json, assemble .env.local, and install dependencies.
  */
 export async function setupPackages(projectPath, options) {
-  const { framework, packageManager, shadcn, supabase, posthog, sentry } =
+  const { framework, packageManager, shadcn, rnr, supabase, posthog, sentry } =
     options;
   const pkgPath = join(projectPath, "package.json");
   const pkg = readJson(pkgPath);
@@ -26,17 +26,41 @@ export async function setupPackages(projectPath, options) {
     pkg.scripts.preinstall = "npx only-allow pnpm";
   }
 
+  // Add Expo-specific scripts
+  if (framework === "expo") {
+    pkg.scripts.start = "expo start --dev-client";
+    pkg.scripts.prebuild = "EXPO_NO_GIT_STATUS=1 expo prebuild --clean";
+    pkg.scripts.android =
+      'if [ ! -d "android" ]; then echo "\\n  No android/ directory found. Run \\\"pnpm prebuild\\\" first to generate native projects.\\n" && exit 1; fi && expo run:android';
+    pkg.scripts.ios =
+      'if [ ! -d "ios" ]; then echo "\\n  No ios/ directory found. Run \\\"pnpm prebuild\\\" first to generate native projects.\\n" && exit 1; fi && expo run:ios';
+    pkg.scripts["build:production"] =
+      "eas build --output dist/ios-production.ipa --profile production --platform ios --local";
+    pkg.scripts.submit =
+      "eas submit --platform ios --path dist/ios-production.ipa";
+    pkg.scripts["push:production"] =
+      "pnpm prebuild && pnpm build:production --non-interactive && pnpm submit --non-interactive";
+  }
+
   writeJson(pkgPath, pkg);
 
   // Collect all deps to install
   const baseDeps =
     framework === "nextjs"
       ? ["clsx", "tailwind-merge", "@t3-oss/env-nextjs", "zod"]
-      : ["clsx", "tailwind-merge", "zod"];
+      : ["zod", "expo-dev-client", "expo-haptics", "expo-system-ui"];
 
-  const baseDevDeps = ["@biomejs/biome"];
+  const baseDevDeps =
+    framework === "nextjs"
+      ? ["@biomejs/biome"]
+      : [
+          "@biomejs/biome",
+          "nativewind",
+          "tailwindcss@3",
+          "tailwindcss-animate",
+        ];
 
-  const integrationOpts = { shadcn, supabase, posthog, sentry };
+  const integrationOpts = { shadcn, rnr, supabase, posthog, sentry };
   const { deps: intDeps, devDeps: intDevDeps } = getIntegrationDeps(
     framework,
     integrationOpts,

@@ -22,6 +22,10 @@ const nextjsDeps = {
 };
 
 const expoDeps = {
+  rnr: {
+    deps: ["class-variance-authority", "clsx", "tailwind-merge"],
+    devDeps: ["@rn-primitives/slot"],
+  },
   supabase: {
     deps: [
       "@supabase/supabase-js",

@@ -28,13 +28,24 @@ export async function scaffold(options) {
     s.stop("Next.js project created");
   } else {
     s.start("Running create-expo-app…");
-    await run("npx", [
-      "create-expo-app@latest",
-      name,
-      "--template",
-      "tabs",
-      "--yes",
-    ]);
+    if (packageManager === "pnpm") {
+      await run("pnpm", [
+        "create",
+        "expo-app@latest",
+        name,
+        "--template",
+        "tabs",
+        "--yes",
+      ]);
+    } else {
+      await run("npx", [
+        "create-expo-app@latest",
+        name,
+        "--template",
+        "tabs",
+        "--yes",
+      ]);
+    }
     s.stop("Expo project created");
   }
 }

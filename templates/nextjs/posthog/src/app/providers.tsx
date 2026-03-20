@@ -3,19 +3,20 @@
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 import { type ReactNode, useEffect } from "react";
+import { env } from "~/env";
 
 export function PostHogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+    if (env.NEXT_PUBLIC_POSTHOG_KEY) {
+      posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
         api_host:
-          process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+          env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
         capture_pageview: false, // We handle this manually
       });
     }
   }, []);
 
-  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  if (!env.NEXT_PUBLIC_POSTHOG_KEY) {
     return <>{children}</>;
   }
 

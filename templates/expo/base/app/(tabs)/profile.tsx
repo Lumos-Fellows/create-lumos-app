@@ -1,15 +1,13 @@
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-3xl font-bold text-foreground mb-3">
-          Welcome to your Lumos App
-        </Text>
+        <Text className="text-3xl font-bold text-foreground mb-3">Profile</Text>
         <Text className="text-base text-muted-foreground text-center">
-          Get started by editing app/(tabs)/index.tsx
+          Get started by editing app/(tabs)/profile.tsx
         </Text>
       </View>
     </SafeAreaView>

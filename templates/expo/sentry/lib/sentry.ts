@@ -1,9 +1,10 @@
+import { env } from "@/env";
 import * as Sentry from "@sentry/react-native";
 
 export function initSentry() {
-  if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  if (env.EXPO_PUBLIC_SENTRY_DSN) {
     Sentry.init({
-      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+      dsn: env.EXPO_PUBLIC_SENTRY_DSN,
       tracesSampleRate: 1.0,
     });
   }

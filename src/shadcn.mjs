@@ -19,7 +19,8 @@ export async function installShadcn(projectPath) {
       cwd: projectPath,
     });
     s.stop("shadcn/ui components installed");
-  } catch {
+  } catch (err) {
     s.stop("shadcn/ui install failed — run `npx shadcn add` manually");
+    p.log.warn(err.message);
   }
 }

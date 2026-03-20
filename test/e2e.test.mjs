@@ -5,12 +5,20 @@
  */
 
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { applyOverlay } from "../src/overlay.mjs";
 import { setupPackages } from "../src/packages.mjs";
 import { generateReadme } from "../src/readme.mjs";
+import { installRnr } from "../src/rnr.mjs";
 import { scaffold } from "../src/scaffold.mjs";
 import { installShadcn } from "../src/shadcn.mjs";
 import { projectDir } from "../src/utils.mjs";
@@ -18,45 +26,78 @@ import { projectDir } from "../src/utils.mjs";
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
 
+const SKIP_DIRS = new Set(["node_modules", ".next", ".expo", ".git"]);
+
+function walkFiles(dir) {
+  const results = [];
+  for (const entry of readdirSync(dir)) {
+    if (SKIP_DIRS.has(entry)) continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...walkFiles(full));
+    } else {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
 // ── test cases ───────────────────────────────────────────────────────────────
 
 const cases = [
   {
-    label: "Next.js + Supabase + shadcn",
+    label: "Next.js (no integrations)",
     options: {
-      name: "test-nextjs-e2e",
+      name: "test-nextjs-bare-e2e",
+      framework: "nextjs",
+      packageManager: "pnpm",
+      shadcn: false,
+      rnr: false,
+      supabase: false,
+      posthog: false,
+      sentry: false,
+      skills: false,
+    },
+  },
+  {
+    label: "Next.js + all integrations",
+    options: {
+      name: "test-nextjs-all-e2e",
       framework: "nextjs",
       packageManager: "pnpm",
       shadcn: true,
+      rnr: false,
       supabase: true,
-      posthog: false,
-      sentry: false,
+      posthog: true,
+      sentry: true,
       skills: false,
     },
   },
   {
-    label: "Next.js + Supabase (no shadcn)",
+    label: "Expo (no integrations)",
     options: {
-      name: "test-nextjs-noshadcn-e2e",
-      framework: "nextjs",
+      name: "test-expo-bare-e2e",
+      framework: "expo",
       packageManager: "pnpm",
       shadcn: false,
-      supabase: true,
+      rnr: false,
+      supabase: false,
       posthog: false,
       sentry: false,
       skills: false,
     },
   },
   {
-    label: "Expo + Supabase",
+    label: "Expo + all integrations + RNR",
     options: {
-      name: "test-expo-e2e",
+      name: "test-expo-all-e2e",
       framework: "expo",
-      packageManager: "npm",
+      packageManager: "pnpm",
       shadcn: false,
+      rnr: true,
       supabase: true,
-      posthog: false,
-      sentry: false,
+      posthog: true,
+      sentry: true,
       skills: false,
     },
   },
@@ -66,7 +107,7 @@ const cases = [
 
 const MAX_CONCURRENCY = 5;
 
-const TEST_TIMEOUT = 120_000;
+const TEST_TIMEOUT = 300_000;
 
 describe(
   "e2e scaffolding",
@@ -96,6 +137,24 @@ describe(
 
         it("applies template overlays", () => {
           applyOverlay(targetDir, options);
+        });
+
+        it("has no residual conditional markers", () => {
+          const files = walkFiles(targetDir);
+          const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css"];
+          const residual = [];
+          for (const file of files) {
+            if (!codeExts.some((ext) => file.endsWith(ext))) continue;
+            const content = readFileSync(file, "utf-8");
+            if (/--\s+[A-Z_]+_(START|END)\s+--/.test(content)) {
+              residual.push(file.slice(targetDir.length + 1));
+            }
+          }
+          assert.deepStrictEqual(
+            residual,
+            [],
+            `Residual conditional markers found in:\n  ${residual.join("\n  ")}`,
+          );
         });
 
         it("does not include eslint config", () => {
@@ -132,6 +191,30 @@ describe(
           );
         });
 
+        if (options.packageManager === "pnpm") {
+          it("has only pnpm-lock.yaml (no package-lock.json)", () => {
+            assert.ok(
+              existsSync(join(targetDir, "pnpm-lock.yaml")),
+              "pnpm-lock.yaml should exist",
+            );
+            assert.ok(
+              !existsSync(join(targetDir, "package-lock.json")),
+              "package-lock.json should not exist when using pnpm",
+            );
+          });
+        } else {
+          it("has only package-lock.json (no pnpm-lock.yaml)", () => {
+            assert.ok(
+              existsSync(join(targetDir, "package-lock.json")),
+              "package-lock.json should exist",
+            );
+            assert.ok(
+              !existsSync(join(targetDir, "pnpm-lock.yaml")),
+              "pnpm-lock.yaml should not exist when using npm",
+            );
+          });
+        }
+
         if (options.shadcn) {
           it("installs shadcn/ui components", async () => {
             await installShadcn(targetDir);
@@ -144,6 +227,20 @@ describe(
                 join(targetDir, "src", "components", "ui", "button.tsx"),
               ),
               "button.tsx should exist when shadcn is enabled",
+            );
+          });
+        }
+
+        if (options.rnr) {
+          it("installs React Native Reusables components", async () => {
+            await installRnr(targetDir);
+            assert.ok(
+              existsSync(join(targetDir, "components.json")),
+              "components.json should exist when RNR is enabled",
+            );
+            assert.ok(
+              existsSync(join(targetDir, "components", "ui", "button.tsx")),
+              "button.tsx should exist when RNR is enabled",
             );
           });
         }
@@ -185,6 +282,36 @@ describe(
             !readme.includes("cp .env.example"),
             "README should not reference .env.example",
           );
+        });
+
+        it("passes TypeScript type check", () => {
+          const tscBin = join(targetDir, "node_modules", ".bin", "tsc");
+          try {
+            execFileSync(tscBin, ["--noEmit"], {
+              cwd: targetDir,
+              stdio: "pipe",
+            });
+          } catch (err) {
+            assert.fail(
+              `tsc --noEmit failed:\n${err.stdout?.toString() || err.stderr?.toString()}`,
+            );
+          }
+        });
+
+        it("passes Biome lint", () => {
+          const biomeBin = join(targetDir, "node_modules", ".bin", "biome");
+          try {
+            // Use "lint" not "check" — formatting diffs from conditional
+            // stripping are expected and auto-fixable, but lint errors are real.
+            execFileSync(biomeBin, ["lint", "."], {
+              cwd: targetDir,
+              stdio: "pipe",
+            });
+          } catch (err) {
+            assert.fail(
+              `biome lint failed:\n${err.stdout?.toString() || err.stderr?.toString()}`,
+            );
+          }
         });
       });
     }

@@ -5,8 +5,16 @@ import { join } from "node:path";
  * Generate a README.md for the scaffolded project.
  */
 export function generateReadme(projectPath, options) {
-  const { name, framework, packageManager, shadcn, supabase, posthog, sentry } =
-    options;
+  const {
+    name,
+    framework,
+    packageManager,
+    shadcn,
+    rnr,
+    supabase,
+    posthog,
+    sentry,
+  } = options;
 
   const pm = packageManager;
   const runCmd = pm === "pnpm" ? "pnpm" : "npm run";
@@ -49,7 +57,7 @@ Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-ap
 
 - **Framework**: ${isNext ? "Next.js (App Router)" : "Expo (React Native)"}
 - **Language**: TypeScript
-- **Styling**: ${isNext ? (shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4") : "React Native StyleSheet"}
+- **Styling**: ${isNext ? (shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4") : rnr ? "NativeWind (Tailwind CSS) + React Native Reusables" : "NativeWind (Tailwind CSS)"}
 - **Linter/Formatter**: Biome
 ${integrations.length > 0 ? `- **Integrations**: ${integrations.join(", ")}` : ""}
 
@@ -74,7 +82,7 @@ ${
 |----------|-------------|
 ${envVarDocs.join("\n")}
 
-Fill in your values in \`.env.local\`. The app validates env vars at startup via Zod — missing required vars will throw a clear error.
+Fill in your values in \`.env.local\`.
 `
     : ""
 }
@@ -82,8 +90,15 @@ Fill in your values in \`.env.local\`. The app validates env vars at startup via
 
 | Command | Description |
 |---------|-------------|
-| \`${runCmd} dev\` | Start development server |
-| \`${runCmd} build\` | Build for production |
+${
+  isNext
+    ? `| \`${runCmd} dev\` | Start development server |
+| \`${runCmd} build\` | Build for production |`
+    : `| \`${runCmd} start\` | Start Expo dev server |
+| \`${runCmd} android\` | Run on Android |
+| \`${runCmd} ios\` | Run on iOS |
+| \`${runCmd} prebuild\` | Generate native projects |`
+}
 | \`${runCmd} format\` | Format code with Biome |
 | \`${runCmd} lint\` | Lint code with Biome |
 | \`${runCmd} typecheck\` | Run TypeScript type checking |
