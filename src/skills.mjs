@@ -4,6 +4,7 @@ import { run } from "./utils.mjs";
 /**
  * Recommended skills per framework.
  * Each entry maps to a `npx skills add <source> --skill <skill> -y` invocation.
+ * If `skill` is omitted, all skills from the source are installed.
  */
 export const NEXTJS_SKILLS = [
   {
@@ -36,17 +37,30 @@ export const EXPO_SKILLS = [
   },
 ];
 
+/** Skills conditional on selected integrations. */
+export const INTEGRATION_SKILLS = {
+  supabase: {
+    label: "Supabase Agent Skills",
+    source: "supabase/agent-skills",
+  },
+};
+
 /** @param {"nextjs" | "expo"} framework */
-export function getSkillsForFramework(framework) {
-  return framework === "expo" ? EXPO_SKILLS : NEXTJS_SKILLS;
+export function getSkillsForFramework(framework, options = {}) {
+  const base = framework === "expo" ? EXPO_SKILLS : NEXTJS_SKILLS;
+  const extra = [];
+  for (const [key, skill] of Object.entries(INTEGRATION_SKILLS)) {
+    if (options[key]) extra.push(skill);
+  }
+  return [...base, ...extra];
 }
 
 /**
  * Prompt the user to pick which skills to install. Call before scaffold.
  * @returns {import("./skills.mjs").Skill[] | null} selected skills, or null if skipped
  */
-export async function selectSkills(framework) {
-  const skills = getSkillsForFramework(framework);
+export async function selectSkills(framework, options = {}) {
+  const skills = getSkillsForFramework(framework, options);
   const selected = await p.multiselect({
     message:
       "Which developer skills would you like to install? (space to toggle, enter to confirm)",
@@ -76,13 +90,10 @@ export async function installSkills(projectPath, selected) {
   const failed = [];
   for (const entry of selected) {
     try {
-      await run(
-        "npx",
-        ["skills", "add", entry.source, "--skill", entry.skill, "-y"],
-        {
-          cwd: projectPath,
-        },
-      );
+      const args = ["skills", "add", entry.source];
+      if (entry.skill) args.push("--skill", entry.skill);
+      args.push("-y");
+      await run("npx", args, { cwd: projectPath });
     } catch (err) {
       failed.push({ label: entry.label, error: err.message });
     }

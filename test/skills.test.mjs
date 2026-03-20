@@ -41,6 +41,7 @@ const {
   selectSkills,
   NEXTJS_SKILLS,
   EXPO_SKILLS,
+  INTEGRATION_SKILLS,
   getSkillsForFramework,
 } = await import("../src/skills.mjs");
 
@@ -102,11 +103,22 @@ describe("EXPO_SKILLS", () => {
 
 describe("getSkillsForFramework", () => {
   it("returns Next.js skills for nextjs", () => {
-    assert.equal(getSkillsForFramework("nextjs"), NEXTJS_SKILLS);
+    assert.deepEqual(getSkillsForFramework("nextjs"), NEXTJS_SKILLS);
   });
 
   it("returns Expo skills for expo", () => {
-    assert.equal(getSkillsForFramework("expo"), EXPO_SKILLS);
+    assert.deepEqual(getSkillsForFramework("expo"), EXPO_SKILLS);
+  });
+
+  it("includes Supabase skill when supabase is enabled", () => {
+    const skills = getSkillsForFramework("nextjs", { supabase: true });
+    assert.equal(skills.length, NEXTJS_SKILLS.length + 1);
+    assert.ok(skills.some((s) => s.source === "supabase/agent-skills"));
+  });
+
+  it("does not include Supabase skill when supabase is disabled", () => {
+    const skills = getSkillsForFramework("nextjs", { supabase: false });
+    assert.deepEqual(skills, NEXTJS_SKILLS);
   });
 });
 
@@ -162,6 +174,18 @@ describe("installSkills", () => {
       ]);
       assert.equal(opts.cwd, "/tmp/test-project");
     }
+  });
+
+  it("omits --skill flag for skills without a skill property", async () => {
+    resetMocks();
+    spawnSucceeds();
+
+    await installSkills("/tmp/test-project", [INTEGRATION_SKILLS.supabase]);
+
+    assert.equal(spawnMock.mock.callCount(), 1);
+    const [cmd, args] = spawnMock.mock.calls[0].arguments;
+    assert.equal(cmd, "npx");
+    assert.deepEqual(args, ["skills", "add", "supabase/agent-skills", "-y"]);
   });
 
   it("installs only the skills passed in", async () => {

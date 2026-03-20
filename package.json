@@ -14,7 +14,7 @@
   "scripts": {
     "start": "node bin/cli.js",
     "test": "node --test --test-force-exit test/e2e.test.mjs",
-    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/templates.test.mjs",
+    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/templates.test.mjs",
     "lint": "biome lint bin src test",
     "format": "biome format --write bin src test biome.json package.json",
     "check": "biome check --write bin src test",
