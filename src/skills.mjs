@@ -67,7 +67,7 @@ export async function selectSkills(framework, options = {}) {
     options: skills.map((s) => ({
       value: s,
       label: s.label,
-      hint: `${s.source} → ${s.skill}`,
+      hint: s.skill ? `${s.source} → ${s.skill}` : s.source,
     })),
     initialValues: skills,
   });
