@@ -229,11 +229,37 @@ describe(
               });
             }
 
+            if (options.supabase && options.packageManager === "pnpm") {
+              it("allows supabase postinstall in pnpm config", () => {
+                const pkg = JSON.parse(
+                  readFileSync(join(targetDir, "package.json"), "utf-8"),
+                );
+                assert.ok(
+                  pkg.pnpm?.onlyBuiltDependencies?.includes("supabase"),
+                  "package.json should have pnpm.onlyBuiltDependencies including supabase",
+                );
+              });
+            }
+
             if (options.supabase) {
-              it("initializes Supabase without throwing", async () => {
-                // initSupabase gracefully handles failure (e.g. binary not
-                // downloadable in CI), so we only assert it doesn't throw.
+              it("has supabase CLI available", () => {
+                const result = execFileSync(
+                  "npx",
+                  ["supabase", "--version"],
+                  { cwd: targetDir, encoding: "utf-8", stdio: "pipe", shell: process.platform === "win32" },
+                ).trim();
+                assert.ok(
+                  /^\d+\.\d+\.\d+/.test(result),
+                  `supabase --version should return a semver version, got: ${result}`,
+                );
+              });
+
+              it("initializes Supabase project", async () => {
                 await initSupabase(targetDir);
+                assert.ok(
+                  existsSync(join(targetDir, "supabase", "config.toml")),
+                  "supabase/config.toml should exist after supabase init",
+                );
               });
             }
 

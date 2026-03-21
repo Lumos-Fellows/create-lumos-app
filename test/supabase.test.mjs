@@ -81,7 +81,7 @@ describe("initSupabase", () => {
     assert.equal(spawnMock.mock.callCount(), 1);
     const [cmd, args, opts] = spawnMock.mock.calls[0].arguments;
     assert.equal(cmd, "npx");
-    assert.deepEqual(args, ["supabase@latest", "init"]);
+    assert.deepEqual(args, ["supabase", "init"]);
     assert.equal(opts.cwd, "/tmp/test-project");
   });
 
