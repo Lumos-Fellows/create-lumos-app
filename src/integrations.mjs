@@ -9,7 +9,7 @@ const nextjsDeps = {
   },
   supabase: {
     deps: ["@supabase/supabase-js", "@supabase/ssr"],
-    devDeps: ["supabase"],
+    devDeps: [],
   },
   posthog: {
     deps: ["posthog-js"],
@@ -31,7 +31,7 @@ const expoDeps = {
       "@supabase/supabase-js",
       "@react-native-async-storage/async-storage",
     ],
-    devDeps: ["supabase"],
+    devDeps: [],
   },
   posthog: {
     deps: ["posthog-react-native"],

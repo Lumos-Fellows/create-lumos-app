@@ -3,8 +3,10 @@ import { run } from "./utils.mjs";
 
 /**
  * Run `supabase init` inside the scaffolded project.
- * Uses npx to resolve the locally installed `supabase` dev dependency
- * (installed via packages.mjs) so no platform-specific CLI installation is needed.
+ * Uses `npx supabase@latest` to download and run the CLI ephemerally —
+ * the supabase npm package requires a postinstall script to fetch the
+ * platform binary, which pnpm blocks by default, so installing it as
+ * a dev dependency is unreliable.
  * Creates the `supabase/` directory with config.toml and seed.sql.
  */
 export async function initSupabase(projectPath) {
@@ -12,7 +14,7 @@ export async function initSupabase(projectPath) {
   s.start("Initializing Supabase project…");
 
   try {
-    await run("npx", ["supabase", "init"], { cwd: projectPath });
+    await run("npx", ["supabase@latest", "init"], { cwd: projectPath });
     s.stop("Supabase initialized");
   } catch (err) {
     s.stop("Supabase init failed");
