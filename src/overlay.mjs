@@ -15,13 +15,19 @@ import { templatesDir } from "./utils.mjs";
  */
 export function applyOverlay(projectPath, options) {
   const tpl = templatesDir();
-  const { framework, shadcn, rnr, supabase, posthog, sentry } = options;
+  const { framework, template, shadcn, rnr, supabase, posthog, sentry } =
+    options;
 
   // 1. Copy shared templates
   copyDir(join(tpl, "shared"), projectPath);
 
   // 2. Copy framework base
   copyDir(join(tpl, framework, "base"), projectPath);
+
+  // 2a. Copy template-specific files (overwrites base files as needed)
+  if (template && template !== "bare") {
+    copyDir(join(tpl, framework, template), projectPath);
+  }
 
   // 2b. Expo-specific: remove default scaffold files that our templates replace
   if (framework === "expo") {
@@ -155,7 +161,7 @@ function buildTagPatterns(tag) {
  */
 function stripConditionals(dir, integrations) {
   const files = walkFiles(dir);
-  const extensions = [".ts", ".tsx", ".css", ".json", ".js"];
+  const extensions = [".ts", ".tsx", ".css", ".json", ".js", ".md"];
 
   // Precompile all regex patterns once
   const compiled = Object.entries(integrations).map(([key, enabled]) => {

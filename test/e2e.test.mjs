@@ -51,6 +51,7 @@ const cases = [
     options: {
       name: "test-nextjs-bare-e2e",
       framework: "nextjs",
+      template: "bare",
       packageManager: "pnpm",
       shadcn: false,
       rnr: false,
@@ -65,6 +66,7 @@ const cases = [
     options: {
       name: "test-nextjs-all-e2e",
       framework: "nextjs",
+      template: "bare",
       packageManager: "pnpm",
       shadcn: true,
       rnr: false,
@@ -75,10 +77,26 @@ const cases = [
     },
   },
   {
+    label: "Next.js + notes-app template",
+    options: {
+      name: "test-nextjs-notes-e2e",
+      framework: "nextjs",
+      template: "notes-app",
+      packageManager: "pnpm",
+      shadcn: false,
+      rnr: false,
+      supabase: false,
+      posthog: false,
+      sentry: false,
+      skills: false,
+    },
+  },
+  {
     label: "Expo (no integrations)",
     options: {
       name: "test-expo-bare-e2e",
       framework: "expo",
+      template: "bare",
       packageManager: "pnpm",
       shadcn: false,
       rnr: false,
@@ -93,6 +111,7 @@ const cases = [
     options: {
       name: "test-expo-all-e2e",
       framework: "expo",
+      template: "bare",
       packageManager: "pnpm",
       shadcn: false,
       rnr: true,
@@ -155,7 +174,7 @@ describe(
 
             it("has no residual conditional markers", () => {
               const files = walkFiles(targetDir);
-              const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css"];
+              const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".md"];
               const residual = [];
               for (const file of files) {
                 if (!codeExts.some((ext) => file.endsWith(ext))) continue;
@@ -243,11 +262,12 @@ describe(
 
             if (options.supabase) {
               it("has supabase CLI available", () => {
-                const result = execFileSync(
-                  "npx",
-                  ["supabase", "--version"],
-                  { cwd: targetDir, encoding: "utf-8", stdio: "pipe", shell: process.platform === "win32" },
-                ).trim();
+                const result = execFileSync("npx", ["supabase", "--version"], {
+                  cwd: targetDir,
+                  encoding: "utf-8",
+                  stdio: "pipe",
+                  shell: process.platform === "win32",
+                }).trim();
                 assert.ok(
                   /^\d+\.\d+\.\d+/.test(result),
                   `supabase --version should return a semver version, got: ${result}`,
@@ -313,6 +333,23 @@ describe(
                     join(targetDir, "src", "components", "ui", "button.tsx"),
                   ),
                   "button.tsx should not exist when shadcn is disabled",
+                );
+              });
+            }
+
+            if (options.template === "notes-app") {
+              it("includes notes-app template files", () => {
+                assert.ok(
+                  existsSync(
+                    join(targetDir, "src", "components", "navbar.tsx"),
+                  ),
+                  "navbar.tsx should exist for notes-app template",
+                );
+                assert.ok(
+                  existsSync(
+                    join(targetDir, "src", "app", "notes", "page.tsx"),
+                  ),
+                  "notes/page.tsx should exist for notes-app template",
                 );
               });
             }

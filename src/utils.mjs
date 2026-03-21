@@ -23,27 +23,35 @@ export function exec(cmd, opts = {}) {
  */
 export function run(cmd, args = [], opts = {}) {
   return new Promise((resolve, reject) => {
-    const spawnOpts = { stdio: "pipe", shell: process.platform === "win32", ...opts };
+    const spawnOpts = {
+      stdio: "pipe",
+      shell: process.platform === "win32",
+      ...opts,
+    };
     debug(`run: ${cmd} ${args.join(" ")}`);
     debug(`  cwd: ${spawnOpts.cwd || process.cwd()}`);
     debug(`  shell: ${spawnOpts.shell}`);
     const child = spawn(cmd, args, spawnOpts);
-    const chunks = [];
+    const stderrChunks = [];
+    const stdoutChunks = [];
     child.stderr?.on("data", (chunk) => {
       debug(`  stderr: ${chunk.toString().trim()}`);
-      chunks.push(chunk);
+      stderrChunks.push(chunk);
     });
     child.stdout?.on("data", (chunk) => {
       debug(`  stdout: ${chunk.toString().trim()}`);
+      stdoutChunks.push(chunk);
     });
     child.on("close", (code) => {
       debug(`  exit code: ${code}`);
       if (code === 0) resolve();
       else {
-        const stderr = Buffer.concat(chunks).toString().trim();
+        const stderr = Buffer.concat(stderrChunks).toString().trim();
+        const stdout = Buffer.concat(stdoutChunks).toString().trim();
+        const output = [stderr, stdout].filter(Boolean).join("\n");
         reject(
           new Error(
-            `${cmd} exited with code ${code}${stderr ? `\n${stderr}` : ""}`,
+            `${cmd} exited with code ${code}${output ? `\n${output}` : ""}`,
           ),
         );
       }

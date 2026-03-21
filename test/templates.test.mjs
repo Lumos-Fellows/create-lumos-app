@@ -47,7 +47,7 @@ function walkFiles(dir) {
 
 describe("Conditional markers are well-formed", () => {
   const allFiles = walkFiles(TEMPLATES);
-  const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".json"];
+  const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".json", ".md"];
   const codeFiles = allFiles.filter((f) =>
     codeExts.some((ext) => f.endsWith(ext)),
   );
