@@ -47,6 +47,26 @@ export async function gatherOptions(args) {
           ],
         }),
 
+      template: ({ results }) =>
+        results.framework === "nextjs"
+          ? p.select({
+              message: "Which template?",
+              initialValue: "notes-app",
+              options: [
+                {
+                  value: "notes-app",
+                  label: "Basic Notes App",
+                  hint: "landing page, navbar, notes with localStorage",
+                },
+                {
+                  value: "bare",
+                  label: "Bare",
+                  hint: "minimal starting point",
+                },
+              ],
+            })
+          : Promise.resolve("bare"),
+
       packageManager: async () => {
         const detected = detectPackageManager();
         const choice = await p.select({
