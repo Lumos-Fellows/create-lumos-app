@@ -42,6 +42,11 @@ export async function setupPackages(projectPath, options) {
       "pnpm prebuild && pnpm build:production --non-interactive && pnpm submit --non-interactive";
   }
 
+  // Allow supabase postinstall script to download the platform binary
+  if (supabase && packageManager === "pnpm") {
+    pkg.pnpm = { ...pkg.pnpm, onlyBuiltDependencies: ["supabase"] };
+  }
+
   writeJson(pkgPath, pkg);
 
   // Collect all deps to install
