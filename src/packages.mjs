@@ -52,7 +52,7 @@ export async function setupPackages(projectPath, options) {
   // Collect all deps to install
   const baseDeps =
     framework === "nextjs"
-      ? ["clsx", "tailwind-merge", "@t3-oss/env-nextjs", "zod"]
+      ? ["clsx", "tailwind-merge", "@t3-oss/env-nextjs", "zod", "next-themes"]
       : ["zod", "expo-dev-client", "expo-haptics", "expo-system-ui"];
 
   const baseDevDeps =

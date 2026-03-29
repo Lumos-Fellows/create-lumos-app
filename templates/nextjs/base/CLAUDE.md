@@ -19,7 +19,7 @@ Use Tailwind CSS v4 utility classes for all styling. Use design tokens from `glo
 
 - **Framework**: Next.js (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS v4 with OKLCH design tokens, dark mode default
+- **Styling**: Tailwind CSS v4 with OKLCH design tokens, light/dark theme support
 - **Linter/Formatter**: Biome
 - **Import alias**: `~/` maps to `./src/*`
 

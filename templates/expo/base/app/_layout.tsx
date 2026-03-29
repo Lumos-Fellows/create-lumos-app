@@ -41,7 +41,7 @@ export default function RootLayout() {
       {/* -- NO_POSTHOG_START -- */}
       <Stack screenOptions={{ headerShown: false }} />
       {/* -- NO_POSTHOG_END -- */}
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
     </>
   );
 }

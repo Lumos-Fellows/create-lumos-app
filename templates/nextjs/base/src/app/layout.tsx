@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ThemeProvider } from "./theme-provider";
 import "./globals.css";
 // -- POSTHOG_START --
 import { PostHogProvider } from "./providers";
@@ -18,16 +19,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        {/* -- POSTHOG_START -- */}
-        <PostHogProvider>
+        <ThemeProvider>
+          {/* -- POSTHOG_START -- */}
+          <PostHogProvider>
+            {children}
+          </PostHogProvider>
+          {/* -- POSTHOG_END -- */}
+          {/* -- NO_POSTHOG_START -- */}
           {children}
-        </PostHogProvider>
-        {/* -- POSTHOG_END -- */}
-        {/* -- NO_POSTHOG_START -- */}
-        {children}
-        {/* -- NO_POSTHOG_END -- */}
+          {/* -- NO_POSTHOG_END -- */}
+        </ThemeProvider>
       </body>
     </html>
   );
