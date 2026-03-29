@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import { describe, it } from "node:test";
 import { templatesDir } from "../src/utils.mjs";
@@ -291,6 +291,87 @@ describe("Expo templates do not use deprecated SafeAreaView from react-native", 
 });
 
 // ── Expo: NativeWind styling convention ─────────────────────────────────────
+
+// ── CLAUDE.md rules structure ────────────────────────────────────────────────
+
+describe("Template CLAUDE.md has a Rules Index", () => {
+  const templateBases = [
+    {
+      name: "nextjs/base",
+      dir: join(NEXTJS_DIR, "base"),
+      integrationDir: NEXTJS_DIR,
+    },
+    {
+      name: "expo/base",
+      dir: join(EXPO_DIR, "base"),
+      integrationDir: EXPO_DIR,
+    },
+  ];
+
+  for (const { name, dir, integrationDir } of templateBases) {
+    const content = readFileSync(join(dir, "CLAUDE.md"), "utf-8");
+
+    it(`${name}/CLAUDE.md has a Rules Index section`, () => {
+      assert.ok(
+        content.includes("## Rules Index"),
+        `${name}/CLAUDE.md should have a "## Rules Index" section`,
+      );
+    });
+
+    it(`${name}/CLAUDE.md Rules Index has a maintenance note`, () => {
+      assert.ok(
+        content.includes("keep this index in sync"),
+        `${name}/CLAUDE.md should remind maintainers to keep the Rules Index in sync`,
+      );
+    });
+
+    it(`${name}/CLAUDE.md Rules Index links all exist`, () => {
+      // Strip SUPABASE-conditional block before checking — those files come from the integration dir
+      const unconditional = content.replace(
+        /\/\/ -- SUPABASE_START --[\s\S]*?\/\/ -- SUPABASE_END --/g,
+        "",
+      );
+      const linkPattern = /\[.*?\]\((.+?\.md)\)/g;
+      for (const [, link] of unconditional.matchAll(linkPattern)) {
+        assert.ok(
+          existsSync(join(dir, link)),
+          `${name}/CLAUDE.md references "${link}" which does not exist`,
+        );
+      }
+    });
+
+    it(`${name}/CLAUDE.md Rules Index is complete`, () => {
+      const rulesDir = join(dir, ".claude", "rules");
+      for (const file of readdirSync(rulesDir).filter((f) =>
+        f.endsWith(".md"),
+      )) {
+        assert.ok(
+          content.includes(file),
+          `${name}/CLAUDE.md Rules Index should reference ${file}`,
+        );
+      }
+    });
+
+    it(`${name}/CLAUDE.md supabase.md link is wrapped in SUPABASE markers`, () => {
+      const supabaseBlock = content.match(
+        /\/\/ -- SUPABASE_START --[\s\S]*?\/\/ -- SUPABASE_END --/,
+      );
+      assert.ok(
+        supabaseBlock?.[0].includes("supabase.md"),
+        `${name}/CLAUDE.md: supabase.md link should be wrapped in SUPABASE markers`,
+      );
+    });
+
+    it(`${name}: supabase integration includes .claude/rules/supabase.md`, () => {
+      assert.ok(
+        existsSync(
+          join(integrationDir, "supabase", ".claude", "rules", "supabase.md"),
+        ),
+        `supabase integration dir should include .claude/rules/supabase.md`,
+      );
+    });
+  }
+});
 
 describe("Expo templates do not use StyleSheet.create", () => {
   for (const file of walkFiles(EXPO_DIR).filter((f) => f.endsWith(".tsx"))) {
