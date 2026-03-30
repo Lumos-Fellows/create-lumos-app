@@ -59,6 +59,7 @@ export function applyOverlay(projectPath, options) {
       "components/useColorScheme.ts",
       "components/useColorScheme.web.ts",
       // Default scaffold directories
+      "components/__tests__",
       "components/navigation",
       "components/ui",
       "constants",
