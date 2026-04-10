@@ -101,6 +101,17 @@ export function validateProjectName(name) {
 }
 
 /**
+ * Convert an arbitrary directory name into a valid npm package name:
+ * lowercase, alphanumeric and hyphens only.
+ */
+export function sanitizePackageName(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
  * Check if the name means "use the current directory".
  */
 export function isCurrentDir(name) {

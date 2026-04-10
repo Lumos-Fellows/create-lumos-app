@@ -10,6 +10,7 @@ import { describe, it } from "node:test";
 import {
   isCurrentDir,
   projectDir,
+  sanitizePackageName,
   validateProjectName,
 } from "../src/utils.mjs";
 
@@ -53,5 +54,25 @@ describe("projectDir", () => {
 
   it("returns subdirectory for regular names", () => {
     assert.equal(projectDir("my-app"), join(process.cwd(), "my-app"));
+  });
+});
+
+describe("sanitizePackageName", () => {
+  it("lowercases uppercase directory names", () => {
+    assert.equal(sanitizePackageName("MyProject"), "myproject");
+  });
+
+  it("replaces underscores and spaces with hyphens", () => {
+    assert.equal(sanitizePackageName("My_Project"), "my-project");
+    assert.equal(sanitizePackageName("My Project"), "my-project");
+  });
+
+  it("collapses multiple separators", () => {
+    assert.equal(sanitizePackageName("My--App"), "my-app");
+  });
+
+  it("leaves already-valid names unchanged", () => {
+    assert.equal(sanitizePackageName("my-app"), "my-app");
+    assert.equal(sanitizePackageName("app123"), "app123");
   });
 });

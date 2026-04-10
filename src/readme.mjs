@@ -6,7 +6,7 @@ import { join } from "node:path";
  */
 export function generateReadme(projectPath, options) {
   const {
-    name,
+    resolvedName,
     framework,
     packageManager,
     shadcn,
@@ -49,7 +49,7 @@ export function generateReadme(projectPath, options) {
     }
   }
 
-  const content = `# ${name}
+  const content = `# ${resolvedName}
 
 Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-app).
 

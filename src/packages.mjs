@@ -13,6 +13,9 @@ export async function setupPackages(projectPath, options) {
   const pkgPath = join(projectPath, "package.json");
   const pkg = readJson(pkgPath);
 
+  // Use the pre-resolved name (handles "." in uppercase directories).
+  pkg.name = options.resolvedName;
+
   // Add scripts
   pkg.scripts = {
     ...pkg.scripts,
