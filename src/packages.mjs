@@ -4,6 +4,39 @@ import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
 import { readJson, run, writeJson } from "./utils.mjs";
 
+export function getBasePackageDeps(framework) {
+  if (framework === "nextjs") {
+    return {
+      deps: [
+        "clsx",
+        "tailwind-merge",
+        "@t3-oss/env-nextjs",
+        "zod",
+        "next-themes",
+      ],
+      devDeps: ["@biomejs/biome"],
+    };
+  }
+
+  return {
+    deps: [
+      "zod",
+      "@expo/vector-icons",
+      "@react-navigation/bottom-tabs",
+      "@react-navigation/elements",
+      "expo-dev-client",
+      "expo-haptics",
+      "expo-system-ui",
+    ],
+    devDeps: [
+      "@biomejs/biome",
+      "nativewind",
+      "tailwindcss@3",
+      "tailwindcss-animate",
+    ],
+  };
+}
+
 /**
  * Modify package.json, assemble .env.local, and install dependencies.
  */
@@ -53,20 +86,8 @@ export async function setupPackages(projectPath, options) {
   writeJson(pkgPath, pkg);
 
   // Collect all deps to install
-  const baseDeps =
-    framework === "nextjs"
-      ? ["clsx", "tailwind-merge", "@t3-oss/env-nextjs", "zod", "next-themes"]
-      : ["zod", "expo-dev-client", "expo-haptics", "expo-system-ui"];
-
-  const baseDevDeps =
-    framework === "nextjs"
-      ? ["@biomejs/biome"]
-      : [
-          "@biomejs/biome",
-          "nativewind",
-          "tailwindcss@3",
-          "tailwindcss-animate",
-        ];
+  const { deps: baseDeps, devDeps: baseDevDeps } =
+    getBasePackageDeps(framework);
 
   const integrationOpts = { shadcn, rnr, supabase, posthog, sentry };
   const { deps: intDeps, devDeps: intDevDeps } = getIntegrationDeps(

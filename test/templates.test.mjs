@@ -231,6 +231,17 @@ describe("Expo env.ts uses process.env for validation wiring", () => {
   });
 });
 
+describe("Expo CSS imports are typed", () => {
+  it("declares CSS modules for the global.css side-effect import", () => {
+    const nativewindEnv = readFileSync(
+      join(EXPO_DIR, "base", "nativewind-env.d.ts"),
+      "utf-8",
+    );
+
+    assert.ok(nativewindEnv.includes('declare module "*.css"'));
+  });
+});
+
 // ── Expo: naming conventions ────────────────────────────────────────────────
 
 describe("Expo templates use kebab-case file names", () => {
