@@ -21,6 +21,17 @@ async function getExistingGitRepositoryRoot(projectPath, runner) {
   }
 }
 
+async function initializeRepositoryOnMain(projectPath, runner) {
+  try {
+    await runner("git", ["init", "--initial-branch=main"], {
+      cwd: projectPath,
+    });
+  } catch {
+    await runner("git", ["init"], { cwd: projectPath });
+    await runner("git", ["branch", "-M", "main"], { cwd: projectPath });
+  }
+}
+
 export async function initializeGitRepository(
   projectPath,
   { runner = run, logger = p.log } = {},
@@ -34,7 +45,7 @@ export async function initializeGitRepository(
   }
 
   try {
-    await runner("git", ["init"], { cwd: projectPath });
+    await initializeRepositoryOnMain(projectPath, runner);
   } catch (err) {
     logger.warn(
       `Git initialization failed before a repository was created. Your project was still created, but has no initial commit.\n\n${err.message}`,
