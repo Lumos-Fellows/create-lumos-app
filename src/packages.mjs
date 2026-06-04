@@ -22,7 +22,6 @@ export function getBasePackageDeps(framework) {
     deps: [
       "zod",
       "@expo/vector-icons",
-      "@react-navigation/bottom-tabs",
       "@react-navigation/elements",
       "expo-dev-client",
       "expo-haptics",

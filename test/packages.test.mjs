@@ -13,8 +13,8 @@ describe("getBasePackageDeps", () => {
     const { deps, devDeps } = getBasePackageDeps("expo");
 
     assert.ok(deps.includes("@expo/vector-icons"));
-    assert.ok(deps.includes("@react-navigation/bottom-tabs"));
     assert.ok(deps.includes("@react-navigation/elements"));
+    assert.ok(!deps.includes("@react-navigation/bottom-tabs"));
     assert.ok(deps.includes("expo-haptics"));
     assert.ok(devDeps.includes("nativewind"));
   });
