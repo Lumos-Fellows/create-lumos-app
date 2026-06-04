@@ -51,8 +51,9 @@ All integrations gracefully no-op when env vars are missing — no runtime error
 3. Overlays Lumos templates (real code files, not string interpolation)
 4. Strips conditional sections for unselected integrations via marker comments
 5. Installs integration dependencies
-6. Assembles `.env.example` and `.env.local` with relevant vars
+6. Assembles `.env.local` with relevant vars
 7. Generates a project README
+8. Initializes Git and creates one final initial commit for standalone projects
 
 ## Development
 
@@ -86,6 +87,7 @@ create-lumos-app/
 │   ├── overlay.mjs              # Copies templates, strips conditionals
 │   ├── integrations.mjs         # Dep lists per integration
 │   ├── packages.mjs             # package.json modifications + install
+│   ├── git.mjs                  # Final generated-project Git initialization
 │   ├── skills.mjs               # Optional skills.sh runner
 │   ├── readme.mjs               # Generates project README
 │   ├── success.mjs              # Prints next-steps output

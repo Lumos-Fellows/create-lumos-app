@@ -3,6 +3,54 @@ import { basename, join } from "node:path";
 import * as p from "@clack/prompts";
 import { isCurrentDir, run } from "./utils.mjs";
 
+export function scaffoldCommand({ framework, packageManager, scaffoldTarget }) {
+  if (framework === "nextjs") {
+    const pmFlag = packageManager === "pnpm" ? "--use-pnpm" : "--use-npm";
+    return {
+      cmd: "npx",
+      args: [
+        "create-next-app@latest",
+        scaffoldTarget,
+        "--app",
+        "--tailwind",
+        "--no-eslint",
+        "--src-dir",
+        "--import-alias",
+        "~/*",
+        "--ts",
+        pmFlag,
+        "--disable-git",
+        "--yes",
+      ],
+    };
+  }
+
+  if (packageManager === "pnpm") {
+    return {
+      cmd: "pnpm",
+      args: [
+        "create",
+        "expo-app@latest",
+        scaffoldTarget,
+        "--template",
+        "tabs",
+        "--yes",
+      ],
+    };
+  }
+
+  return {
+    cmd: "npx",
+    args: [
+      "create-expo-app@latest",
+      scaffoldTarget,
+      "--template",
+      "tabs",
+      "--yes",
+    ],
+  };
+}
+
 /**
  * Run the base scaffolding tool (create-next-app or create-expo-app).
  *
@@ -23,41 +71,21 @@ export async function scaffold(options) {
 
   if (framework === "nextjs") {
     s.start("Running create-next-app…");
-    const pmFlag = packageManager === "pnpm" ? "--use-pnpm" : "--use-npm";
-    await run("npx", [
-      "create-next-app@latest",
+    const { cmd, args } = scaffoldCommand({
+      framework,
+      packageManager,
       scaffoldTarget,
-      "--app",
-      "--tailwind",
-      "--no-eslint",
-      "--src-dir",
-      "--import-alias",
-      "~/*",
-      "--ts",
-      pmFlag,
-      "--yes",
-    ]);
+    });
+    await run(cmd, args);
     s.stop("Next.js project created");
   } else {
     s.start("Running create-expo-app…");
-    if (packageManager === "pnpm") {
-      await run("pnpm", [
-        "create",
-        "expo-app@latest",
-        scaffoldTarget,
-        "--template",
-        "tabs",
-        "--yes",
-      ]);
-    } else {
-      await run("npx", [
-        "create-expo-app@latest",
-        scaffoldTarget,
-        "--template",
-        "tabs",
-        "--yes",
-      ]);
-    }
+    const { cmd, args } = scaffoldCommand({
+      framework,
+      packageManager,
+      scaffoldTarget,
+    });
+    await run(cmd, args);
     s.stop("Expo project created");
   }
 

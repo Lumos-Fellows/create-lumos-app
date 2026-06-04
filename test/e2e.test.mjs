@@ -7,14 +7,24 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
+  cpSync,
   existsSync,
+  mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { join, relative, sep } from "node:path";
 import { after, describe, it } from "node:test";
+import {
+  GIT_INITIALIZATION_STATUS,
+  INITIAL_COMMIT_MESSAGE,
+  initializeGitRepository,
+} from "../src/git.mjs";
 import { applyOverlay } from "../src/overlay.mjs";
 import { setupPackages } from "../src/packages.mjs";
 import { generateReadme } from "../src/readme.mjs";
@@ -41,6 +51,61 @@ function walkFiles(dir) {
     }
   }
   return results;
+}
+
+function assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options) {
+  const gitignore = readFileSync(join(targetDir, ".gitignore"), "utf-8");
+
+  assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);
+  assert.match(gitignore, /(^|\n)\.env\*(?:\.local)?(\n|$)/);
+
+  if (options.framework === "nextjs") {
+    assert.match(gitignore, /(^|\n)\.next\/?(\n|$)/);
+  } else {
+    assert.match(gitignore, /(^|\n)\.expo\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)dist\/?(\n|$)/);
+  }
+
+  if (options.supabase) {
+    assert.match(gitignore, /(^|\n)supabase\/\.temp\/?(\n|$)/);
+  }
+}
+
+function copyGeneratedAppForGitAssertion(sourceDir) {
+  const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-e2e-git-"));
+
+  cpSync(sourceDir, projectPath, {
+    recursive: true,
+    filter: (src) => {
+      const rel = relative(sourceDir, src);
+      const topLevel = rel.split(sep)[0];
+      return !["node_modules", ".next", ".expo", ".git"].includes(topLevel);
+    },
+  });
+
+  mkdirSync(join(projectPath, "node_modules"), { recursive: true });
+  mkdirSync(join(projectPath, ".next"), { recursive: true });
+  mkdirSync(join(projectPath, "supabase", ".temp"), { recursive: true });
+  writeFileSync(join(projectPath, "node_modules", "ignored.js"), "ignored\n");
+  writeFileSync(join(projectPath, ".next", "ignored"), "ignored\n");
+  writeFileSync(join(projectPath, "supabase", ".temp", "ignored"), "ignored\n");
+
+  return projectPath;
+}
+
+function runGitWithTestIdentity(cmd, args, opts) {
+  return execFileSync(cmd, args, {
+    ...opts,
+    encoding: "utf-8",
+    stdio: "pipe",
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: "create-lumos-app tests",
+      GIT_AUTHOR_EMAIL: "tests@example.com",
+      GIT_COMMITTER_NAME: "create-lumos-app tests",
+      GIT_COMMITTER_EMAIL: "tests@example.com",
+    },
+  });
 }
 
 // ── test cases ───────────────────────────────────────────────────────────────
@@ -248,6 +313,10 @@ describe(
               });
             }
 
+            it("ignores local-only generated project files", () => {
+              assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options);
+            });
+
             if (options.supabase && options.packageManager === "pnpm") {
               it("allows supabase postinstall in pnpm config", () => {
                 const pkg = JSON.parse(
@@ -280,6 +349,14 @@ describe(
                   existsSync(join(targetDir, "supabase", "config.toml")),
                   "supabase/config.toml should exist after supabase init",
                 );
+              });
+
+              it("ignores Supabase temp files", () => {
+                const gitignore = readFileSync(
+                  join(targetDir, "supabase", ".gitignore"),
+                  "utf-8",
+                );
+                assert.match(gitignore, /(^|\n)\.temp(?:\/)?(\n|$)/);
               });
             }
 
@@ -380,6 +457,55 @@ describe(
                 "README should not reference .env.example",
               );
             });
+
+            if (
+              options.framework === "nextjs" &&
+              options.template === "notes-app"
+            ) {
+              it("creates a clean final Git commit with generated notes-app files", async () => {
+                const gitProjectPath =
+                  copyGeneratedAppForGitAssertion(targetDir);
+                try {
+                  const initialized = await initializeGitRepository(
+                    gitProjectPath,
+                    { runner: runGitWithTestIdentity },
+                  );
+
+                  assert.equal(
+                    initialized,
+                    GIT_INITIALIZATION_STATUS.COMMITTED,
+                  );
+                  assert.equal(
+                    execFileSync("git", ["status", "--short"], {
+                      cwd: gitProjectPath,
+                      encoding: "utf-8",
+                    }),
+                    "",
+                  );
+
+                  const head = execFileSync(
+                    "git",
+                    ["show", "--name-only", "--oneline", "HEAD"],
+                    {
+                      cwd: gitProjectPath,
+                      encoding: "utf-8",
+                    },
+                  );
+                  assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
+                  assert.ok(head.includes("src/app/notes/page.tsx"));
+                  assert.ok(head.includes("src/components/navbar.tsx"));
+                  assert.ok(
+                    !head.includes("Initial commit from Create Next App"),
+                  );
+                  assert.ok(!head.includes(".env.local"));
+                  assert.ok(!head.includes("node_modules"));
+                  assert.ok(!head.includes(".next"));
+                  assert.ok(!head.includes("supabase/.temp"));
+                } finally {
+                  rmSync(gitProjectPath, { recursive: true, force: true });
+                }
+              });
+            }
 
             it("passes TypeScript type check", () => {
               const tscBin = join(targetDir, "node_modules", ".bin", "tsc");

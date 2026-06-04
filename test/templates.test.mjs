@@ -147,6 +147,22 @@ describe("Next.js env.ts uses process.env in runtimeEnv", () => {
   });
 });
 
+describe("Shared gitignore protects local generated-project files", () => {
+  const gitignore = readFileSync(
+    join(TEMPLATES, "shared", ".gitignore"),
+    "utf-8",
+  );
+
+  it("ignores local-only files and generated output for both frameworks", () => {
+    assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)\.env\*(\n|$)/);
+    assert.match(gitignore, /(^|\n)\.next\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)\.expo\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)dist\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)supabase\/\.temp\/?(\n|$)/);
+  });
+});
+
 // ── Expo: validated env ──────────────────────────────────────────────────────
 
 describe("Expo integration templates use validated env", () => {
