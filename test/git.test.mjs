@@ -6,7 +6,13 @@
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, mock } from "node:test";
@@ -46,7 +52,7 @@ describe("initializeGitRepository", () => {
       calls.map(([cmd, args]) => [cmd, args]),
       [
         ["git", ["rev-parse", "--show-toplevel"]],
-        ["git", ["init"]],
+        ["git", ["init", "--initial-branch=main"]],
         ["git", ["add", "."]],
         ["git", ["commit", "-m", INITIAL_COMMIT_MESSAGE]],
       ],
@@ -201,6 +207,86 @@ describe("initializeGitRepository", () => {
         assert.ok(!head.includes(".next"));
         assert.ok(!head.includes("supabase/.temp"));
       } finally {
+        rmSync(projectPath, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it(
+    "creates the initial commit on main when Git has no configured default branch",
+    { skip: !hasGit() },
+    async () => {
+      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
+      const worktreePath = `${projectPath}-worktree-from-main`;
+      const globalConfigPath = join(projectPath, "empty-gitconfig");
+
+      try {
+        writeFileSync(globalConfigPath, "");
+        writeFileSync(join(projectPath, ".gitignore"), "\n");
+        writeFileSync(join(projectPath, "README.md"), "# Test app\n");
+
+        const initialized = await initializeGitRepository(projectPath, {
+          runner: (cmd, args, opts) =>
+            execFileSync(cmd, args, {
+              ...opts,
+              encoding: "utf-8",
+              stdio: "pipe",
+              env: {
+                ...process.env,
+                GIT_CONFIG_GLOBAL: globalConfigPath,
+                GIT_CONFIG_NOSYSTEM: "1",
+                GIT_AUTHOR_NAME: "create-lumos-app tests",
+                GIT_AUTHOR_EMAIL: "tests@example.com",
+                GIT_COMMITTER_NAME: "create-lumos-app tests",
+                GIT_COMMITTER_EMAIL: "tests@example.com",
+              },
+            }),
+        });
+
+        assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+        assert.equal(
+          execFileSync("git", ["branch", "--show-current"], {
+            cwd: projectPath,
+            encoding: "utf-8",
+            env: {
+              ...process.env,
+              GIT_CONFIG_GLOBAL: globalConfigPath,
+              GIT_CONFIG_NOSYSTEM: "1",
+            },
+          }).trim(),
+          "main",
+        );
+
+        execFileSync(
+          "git",
+          ["worktree", "add", "-b", "test-worktree", worktreePath, "main"],
+          {
+            cwd: projectPath,
+            encoding: "utf-8",
+            stdio: "pipe",
+            env: {
+              ...process.env,
+              GIT_CONFIG_GLOBAL: globalConfigPath,
+              GIT_CONFIG_NOSYSTEM: "1",
+            },
+          },
+        );
+        assert.equal(
+          realpathSync(
+            execFileSync("git", ["rev-parse", "--show-toplevel"], {
+              cwd: worktreePath,
+              encoding: "utf-8",
+              env: {
+                ...process.env,
+                GIT_CONFIG_GLOBAL: globalConfigPath,
+                GIT_CONFIG_NOSYSTEM: "1",
+              },
+            }).trim(),
+          ),
+          realpathSync(worktreePath),
+        );
+      } finally {
+        rmSync(worktreePath, { recursive: true, force: true });
         rmSync(projectPath, { recursive: true, force: true });
       }
     },

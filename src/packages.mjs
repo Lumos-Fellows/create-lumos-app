@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
@@ -39,7 +39,11 @@ export function getBasePackageDeps(framework) {
 /**
  * Modify package.json, assemble .env.local, and install dependencies.
  */
-export async function setupPackages(projectPath, options) {
+export async function setupPackages(
+  projectPath,
+  options,
+  { runner = run } = {},
+) {
   const { framework, packageManager, shadcn, rnr, supabase, posthog, sentry } =
     options;
   const pkgPath = join(projectPath, "package.json");
@@ -102,25 +106,29 @@ export async function setupPackages(projectPath, options) {
   // Install production deps
   const s = p.spinner();
   s.start("Installing dependencies…");
-  await run(packageManager, [addArg, ...allDeps], { cwd: projectPath });
+  await runner(packageManager, [addArg, ...allDeps], { cwd: projectPath });
   s.stop("Dependencies installed");
 
   // Install dev deps
   if (allDevDeps.length > 0) {
     const devFlag = packageManager === "pnpm" ? "-D" : "--save-dev";
     s.start("Installing dev dependencies…");
-    await run(packageManager, [addArg, devFlag, ...allDevDeps], {
+    await runner(packageManager, [addArg, devFlag, ...allDevDeps], {
       cwd: projectPath,
     });
     s.stop("Dev dependencies installed");
   }
 
-  // Append integration env vars to .env.local
+  // Ensure .env.local exists, then append integration env vars when needed.
+  // Some scaffolders no longer create this file by default.
+  const envLocalPath = join(projectPath, ".env.local");
+  let envContent = existsSync(envLocalPath)
+    ? readFileSync(envLocalPath, "utf-8")
+    : "";
+
   const envVars = getEnvVars(framework, integrationOpts);
   if (envVars.length > 0) {
-    const envLocalPath = join(projectPath, ".env.local");
-    let envContent = readFileSync(envLocalPath, "utf-8");
     envContent += `\n${envVars.join("\n")}\n`;
-    writeFileSync(envLocalPath, envContent);
   }
+  writeFileSync(envLocalPath, envContent);
 }
