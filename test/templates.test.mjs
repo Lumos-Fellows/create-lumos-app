@@ -151,7 +151,9 @@ describe("Shared gitignore protects local generated-project files", () => {
   const gitignore = readFileSync(
     join(TEMPLATES, "shared", ".gitignore"),
     "utf-8",
-  );
+  )
+    .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n");
 
   it("ignores local-only files and generated output for both frameworks", () => {
     assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);

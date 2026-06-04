@@ -54,7 +54,9 @@ function walkFiles(dir) {
 }
 
 function assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options) {
-  const gitignore = readFileSync(join(targetDir, ".gitignore"), "utf-8");
+  const gitignore = readFileSync(join(targetDir, ".gitignore"), "utf-8")
+    .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n");
 
   assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);
   assert.match(gitignore, /(^|\n)\.env\*(?:\.local)?(\n|$)/);
