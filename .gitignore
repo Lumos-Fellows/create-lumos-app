@@ -2,3 +2,13 @@ node_modules/
 .DS_Store
 *.log
 test-*-e2e/
+
+# Claude Code worktrees and local-only config
+.claude/worktrees/
+.claude/settings.local.json
+
+# Local environment files
+/.env
+/.env.*
+!/.env.example
+!/.env.*.example
