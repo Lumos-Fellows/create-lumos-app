@@ -165,6 +165,22 @@ describe("Shared gitignore protects local generated-project files", () => {
   });
 });
 
+describe("Generated Biome configs ignore agent-managed skill bundles", () => {
+  for (const [framework, configPath] of [
+    ["Next.js", join(NEXTJS_DIR, "base", "_biome.json")],
+    ["Expo", join(EXPO_DIR, "base", "_biome.json")],
+  ]) {
+    it(`${framework} excludes .agents from Biome checks`, () => {
+      const config = JSON.parse(readFileSync(configPath, "utf-8"));
+
+      assert.ok(
+        config.files.includes.includes("!.agents"),
+        `${framework} Biome config should not lint downloaded skills`,
+      );
+    });
+  }
+});
+
 // ── Expo: validated env ──────────────────────────────────────────────────────
 
 describe("Expo integration templates use validated env", () => {
