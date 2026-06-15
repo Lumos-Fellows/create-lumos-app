@@ -86,10 +86,25 @@ export function applyOverlay(projectPath, options) {
     }
   }
 
-  // 2c. Rename _biome.json → biome.json (prefixed to avoid Biome config discovery in this repo)
+  // 2c. Next.js-specific: remove default starter assets that our templates
+  // replace and that fail generated-project Biome lint.
+  if (framework === "nextjs") {
+    const nextCleanup = [
+      "public/file.svg",
+      "public/globe.svg",
+      "public/next.svg",
+      "public/vercel.svg",
+      "public/window.svg",
+    ];
+    for (const rel of nextCleanup) {
+      rmSync(join(projectPath, rel), { force: true });
+    }
+  }
+
+  // 2d. Rename _biome.json → biome.json (prefixed to avoid Biome config discovery in this repo)
   renameSync(join(projectPath, "_biome.json"), join(projectPath, "biome.json"));
 
-  // 2c. Expo-specific: replace app.json with app.config.values.js and inject project name
+  // 2e. Expo-specific: replace app.json with app.config.values.js and inject project name
   if (framework === "expo") {
     const appJson = join(projectPath, "app.json");
     rmSync(appJson, { force: true });
