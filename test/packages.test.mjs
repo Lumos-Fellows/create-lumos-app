@@ -15,7 +15,11 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { getBasePackageDeps, setupPackages } from "../src/packages.mjs";
+import {
+  BIOME_VERSION,
+  getBasePackageDeps,
+  setupPackages,
+} from "../src/packages.mjs";
 
 describe("getBasePackageDeps", () => {
   it("includes Expo packages imported by the generated base template", () => {
@@ -25,7 +29,15 @@ describe("getBasePackageDeps", () => {
     assert.ok(deps.includes("@react-navigation/elements"));
     assert.ok(!deps.includes("@react-navigation/bottom-tabs"));
     assert.ok(deps.includes("expo-haptics"));
+    assert.ok(devDeps.includes(`@biomejs/biome@${BIOME_VERSION}`));
     assert.ok(devDeps.includes("nativewind"));
+  });
+
+  it("pins Biome for generated projects", () => {
+    const { devDeps } = getBasePackageDeps("nextjs");
+
+    assert.ok(devDeps.includes("@biomejs/biome@2.4.8"));
+    assert.ok(!devDeps.includes("@biomejs/biome"));
   });
 });
 

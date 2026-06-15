@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { basename } from "node:path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { formatProject } from "./format.mjs";
 import { initializeGitRepository } from "./git.mjs";
 import { applyOverlay } from "./overlay.mjs";
 import { setupPackages } from "./packages.mjs";
@@ -79,10 +80,13 @@ export async function main(args) {
     generateReadme(targetDir, options);
     p.log.success("README.md generated");
 
-    // 10. Initialize Git after all generated files are in place
+    // 10. Format generated files after all integrations have written output
+    await formatProject(targetDir, options);
+
+    // 11. Initialize Git after all generated files are in place
     await initializeGitRepository(targetDir);
 
-    // 11. Print success
+    // 12. Print success
     printSuccess(options);
   } catch (err) {
     p.log.error(err.message);
