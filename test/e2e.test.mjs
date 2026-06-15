@@ -60,7 +60,12 @@ function assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options) {
     .replaceAll("\r", "\n");
 
   assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);
-  assert.match(gitignore, /(^|\n)\.env\*(?:\.local)?(\n|$)/);
+  assert.match(gitignore, /(^|\n)\/\.env(\n|$)/);
+  assert.match(gitignore, /(^|\n)\/\.env\.\*(\n|$)/);
+  assert.match(gitignore, /(^|\n)!\/\.env\.example(\n|$)/);
+  assert.match(gitignore, /(^|\n)!\/\.env\.\*\.example(\n|$)/);
+  assert.match(gitignore, /(^|\n)\.claude\/worktrees\/?(\n|$)/);
+  assert.match(gitignore, /(^|\n)\.claude\/settings\.local\.json(\n|$)/);
 
   if (options.framework === "nextjs") {
     assert.match(gitignore, /(^|\n)\.next\/?(\n|$)/);
@@ -72,6 +77,22 @@ function assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options) {
   if (options.supabase) {
     assert.match(gitignore, /(^|\n)supabase\/\.temp\/?(\n|$)/);
   }
+}
+
+function assertGeneratedWorktreeIncludeCopiesLocalFiles(targetDir) {
+  const worktreeincludePath = join(targetDir, ".worktreeinclude");
+  assert.ok(existsSync(worktreeincludePath), ".worktreeinclude should exist");
+
+  const worktreeinclude = readFileSync(worktreeincludePath, "utf-8")
+    .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n");
+
+  assert.match(worktreeinclude, /(^|\n)\/\.env(\n|$)/);
+  assert.match(worktreeinclude, /(^|\n)\/\.env\.\*(\n|$)/);
+  assert.match(
+    worktreeinclude,
+    /(^|\n)\/\.claude\/settings\.local\.json(\n|$)/,
+  );
 }
 
 function copyGeneratedAppForGitAssertion(sourceDir) {
@@ -318,6 +339,10 @@ describe(
 
             it("ignores local-only generated project files", () => {
               assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options);
+            });
+
+            it("includes local-only files in Claude worktrees", () => {
+              assertGeneratedWorktreeIncludeCopiesLocalFiles(targetDir);
             });
 
             if (options.supabase && options.packageManager === "pnpm") {

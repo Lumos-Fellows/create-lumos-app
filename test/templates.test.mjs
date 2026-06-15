@@ -5,7 +5,19 @@
  */
 
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { describe, it } from "node:test";
 import { templatesDir } from "../src/utils.mjs";
@@ -41,6 +53,15 @@ function walkFiles(dir) {
     }
   }
   return results;
+}
+
+function hasGit() {
+  try {
+    execFileSync("git", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ── Marker integrity ────────────────────────────────────────────────────────
@@ -157,12 +178,88 @@ describe("Shared gitignore protects local generated-project files", () => {
 
   it("ignores local-only files and generated output for both frameworks", () => {
     assert.match(gitignore, /(^|\n)node_modules\/?(\n|$)/);
-    assert.match(gitignore, /(^|\n)\.env\*(\n|$)/);
+    assert.match(gitignore, /(^|\n)\/\.env(\n|$)/);
+    assert.match(gitignore, /(^|\n)\/\.env\.\*(\n|$)/);
+    assert.match(gitignore, /(^|\n)!\/\.env\.example(\n|$)/);
+    assert.match(gitignore, /(^|\n)!\/\.env\.\*\.example(\n|$)/);
+    assert.match(gitignore, /(^|\n)\.claude\/worktrees\/?(\n|$)/);
+    assert.match(gitignore, /(^|\n)\.claude\/settings\.local\.json(\n|$)/);
     assert.match(gitignore, /(^|\n)\.next\/?(\n|$)/);
     assert.match(gitignore, /(^|\n)\.expo\/?(\n|$)/);
     assert.match(gitignore, /(^|\n)dist\/?(\n|$)/);
     assert.match(gitignore, /(^|\n)supabase\/\.temp\/?(\n|$)/);
   });
+});
+
+describe("Shared Claude worktree include copies local generated-project config", () => {
+  const worktreeincludePath = join(TEMPLATES, "shared", ".worktreeinclude");
+  const worktreeinclude = existsSync(worktreeincludePath)
+    ? readFileSync(worktreeincludePath, "utf-8")
+        .replaceAll("\r\n", "\n")
+        .replaceAll("\r", "\n")
+    : "";
+
+  it("includes local env and Claude local settings files", () => {
+    assert.ok(existsSync(worktreeincludePath), ".worktreeinclude should exist");
+    assert.match(worktreeinclude, /(^|\n)\/\.env(\n|$)/);
+    assert.match(worktreeinclude, /(^|\n)\/\.env\.\*(\n|$)/);
+    assert.match(
+      worktreeinclude,
+      /(^|\n)\/\.claude\/settings\.local\.json(\n|$)/,
+    );
+  });
+
+  it(
+    "only asks Claude to copy files ignored by generated gitignore",
+    { skip: !hasGit() },
+    () => {
+      const projectPath = mkdtempSync(
+        join(tmpdir(), "create-lumos-app-worktreeinclude-"),
+      );
+
+      try {
+        cpSync(
+          join(TEMPLATES, "shared", ".gitignore"),
+          join(projectPath, ".gitignore"),
+        );
+        cpSync(worktreeincludePath, join(projectPath, ".worktreeinclude"));
+        mkdirSync(join(projectPath, ".claude", "worktrees", "state"), {
+          recursive: true,
+        });
+        writeFileSync(join(projectPath, ".env"), "ROOT_ENV=1\n");
+        writeFileSync(join(projectPath, ".env.local"), "LOCAL_ENV=1\n");
+        writeFileSync(join(projectPath, ".env.example"), "EXAMPLE_ENV=1\n");
+        writeFileSync(
+          join(projectPath, ".claude", "settings.local.json"),
+          "{}\n",
+        );
+
+        execFileSync("git", ["init", "--initial-branch=main"], {
+          cwd: projectPath,
+          stdio: "ignore",
+        });
+
+        for (const path of [
+          ".env",
+          ".env.local",
+          ".claude/settings.local.json",
+          ".claude/worktrees/state",
+        ]) {
+          execFileSync("git", ["check-ignore", "-q", path], {
+            cwd: projectPath,
+          });
+        }
+
+        assert.throws(() =>
+          execFileSync("git", ["check-ignore", "-q", ".env.example"], {
+            cwd: projectPath,
+          }),
+        );
+      } finally {
+        rmSync(projectPath, { recursive: true, force: true });
+      }
+    },
+  );
 });
 
 describe("Generated Biome configs ignore agent-managed skill bundles", () => {
