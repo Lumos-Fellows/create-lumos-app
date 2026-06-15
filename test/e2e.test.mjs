@@ -20,6 +20,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative, sep } from "node:path";
 import { after, describe, it } from "node:test";
+import { formatProject } from "../src/format.mjs";
 import {
   GIT_INITIALIZATION_STATUS,
   INITIAL_COMMIT_MESSAGE,
@@ -460,6 +461,10 @@ describe(
               );
             });
 
+            it("formats generated files", async () => {
+              await formatProject(targetDir, options);
+            });
+
             if (
               options.framework === "nextjs" &&
               options.template === "notes-app"
@@ -524,20 +529,19 @@ describe(
               }
             });
 
-            it("passes Biome lint", () => {
+            it("passes Biome check", () => {
               const biomeBin = join(targetDir, "node_modules", ".bin", "biome");
               try {
-                // Use "lint" not "check" — formatting diffs from conditional
-                // stripping are expected and auto-fixable, but lint errors are real.
-                execFileSync(biomeBin, ["lint", "."], {
+                execFileSync(biomeBin, ["check", "."], {
                   cwd: targetDir,
                   stdio: "pipe",
                   shell: process.platform === "win32",
                 });
               } catch (err) {
-                assert.fail(
-                  `biome lint failed:\n${err.stdout?.toString() || err.stderr?.toString()}`,
-                );
+                const output = [err.stdout?.toString(), err.stderr?.toString()]
+                  .filter(Boolean)
+                  .join("\n");
+                assert.fail(`biome check failed:\n${output}`);
               }
             });
           });

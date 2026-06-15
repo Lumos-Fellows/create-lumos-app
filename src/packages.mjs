@@ -4,6 +4,8 @@ import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
 import { readJson, run, writeJson } from "./utils.mjs";
 
+export const BIOME_VERSION = "2.4.8";
+
 export function getBasePackageDeps(framework) {
   if (framework === "nextjs") {
     return {
@@ -14,7 +16,7 @@ export function getBasePackageDeps(framework) {
         "zod",
         "next-themes",
       ],
-      devDeps: ["@biomejs/biome"],
+      devDeps: [`@biomejs/biome@${BIOME_VERSION}`],
     };
   }
 
@@ -28,7 +30,7 @@ export function getBasePackageDeps(framework) {
       "expo-system-ui",
     ],
     devDeps: [
-      "@biomejs/biome",
+      `@biomejs/biome@${BIOME_VERSION}`,
       "nativewind",
       "tailwindcss@3",
       "tailwindcss-animate",
