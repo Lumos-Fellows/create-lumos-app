@@ -88,6 +88,7 @@ function assertGeneratedWorktreeIncludeCopiesLocalFiles(targetDir) {
     .replaceAll("\r", "\n");
 
   assert.match(worktreeinclude, /(^|\n)\/\.env(\n|$)/);
+  assert.match(worktreeinclude, /(^|\n)\/\.env\.local(\n|$)/);
   assert.match(worktreeinclude, /(^|\n)\/\.env\.\*(\n|$)/);
   assert.match(
     worktreeinclude,
@@ -347,12 +348,15 @@ describe(
 
             if (options.supabase && options.packageManager === "pnpm") {
               it("allows supabase postinstall in pnpm config", () => {
-                const pkg = JSON.parse(
-                  readFileSync(join(targetDir, "package.json"), "utf-8"),
+                const workspace = readFileSync(
+                  join(targetDir, "pnpm-workspace.yaml"),
+                  "utf-8",
                 );
                 assert.ok(
-                  pkg.pnpm?.onlyBuiltDependencies?.includes("supabase"),
-                  "package.json should have pnpm.onlyBuiltDependencies including supabase",
+                  /allowBuilds:\n(?: {2}.+\n)* {2}supabase: true\n/.test(
+                    workspace,
+                  ),
+                  "pnpm-workspace.yaml should have allowBuilds.supabase set to true",
                 );
               });
             }

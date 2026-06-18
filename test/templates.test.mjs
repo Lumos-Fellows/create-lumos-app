@@ -202,6 +202,7 @@ describe("Shared Claude worktree include copies local generated-project config",
   it("includes local env and Claude local settings files", () => {
     assert.ok(existsSync(worktreeincludePath), ".worktreeinclude should exist");
     assert.match(worktreeinclude, /(^|\n)\/\.env(\n|$)/);
+    assert.match(worktreeinclude, /(^|\n)\/\.env\.local(\n|$)/);
     assert.match(worktreeinclude, /(^|\n)\/\.env\.\*(\n|$)/);
     assert.match(
       worktreeinclude,
@@ -262,6 +263,57 @@ describe("Shared Claude worktree include copies local generated-project config",
   );
 });
 
+describe("Generated Claude Stop hook", () => {
+  const hookPath = join(
+    TEMPLATES,
+    "shared",
+    ".claude",
+    "hooks",
+    "stop-checks.sh",
+  );
+
+  it("is referenced by both framework settings files", () => {
+    for (const settingsPath of [
+      join(NEXTJS_DIR, "base", ".claude", "settings.json"),
+      join(EXPO_DIR, "base", ".claude", "settings.json"),
+    ]) {
+      const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+      assert.equal(
+        settings.hooks.Stop[0].hooks[0].command,
+        "sh .claude/hooks/stop-checks.sh",
+      );
+    }
+  });
+
+  it("skips cleanly before dependencies are installed in a fresh worktree", () => {
+    const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-hook-"));
+    const packageJsonPath = join(projectPath, "package.json");
+    const packageJson = `${JSON.stringify({
+      name: "hook-test",
+      scripts: {
+        format: "biome format --write .",
+        lint: "biome check .",
+        typecheck: "tsc --noEmit",
+      },
+    })}\n`;
+
+    try {
+      writeFileSync(packageJsonPath, packageJson);
+      writeFileSync(join(projectPath, "pnpm-lock.yaml"), "\n");
+
+      execFileSync("sh", [hookPath], {
+        cwd: projectPath,
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      assert.equal(readFileSync(packageJsonPath, "utf-8"), packageJson);
+    } finally {
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("Generated Biome configs ignore agent-managed skill bundles", () => {
   for (const [framework, configPath] of [
     ["Next.js", join(NEXTJS_DIR, "base", "_biome.json")],
@@ -273,6 +325,10 @@ describe("Generated Biome configs ignore agent-managed skill bundles", () => {
       assert.ok(
         config.files.includes.includes("!.agents"),
         `${framework} Biome config should not lint downloaded skills`,
+      );
+      assert.ok(
+        config.files.includes.includes("!.claude/worktrees"),
+        `${framework} Biome config should not lint Claude worktrees`,
       );
     });
   }

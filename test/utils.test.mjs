@@ -10,9 +10,21 @@ import { describe, it } from "node:test";
 import {
   isCurrentDir,
   projectDir,
+  run,
   sanitizePackageName,
   validateProjectName,
 } from "../src/utils.mjs";
+
+describe("run", () => {
+  it("returns captured stdout on success", async () => {
+    const stdout = await run(process.execPath, [
+      "-e",
+      "process.stdout.write('hello')",
+    ]);
+
+    assert.equal(stdout, "hello");
+  });
+});
 
 describe("validateProjectName", () => {
   it('accepts "." as current directory', () => {

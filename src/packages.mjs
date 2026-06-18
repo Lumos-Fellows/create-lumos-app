@@ -2,9 +2,108 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
-import { readJson, run, writeJson } from "./utils.mjs";
+import { exec, readJson, run, writeJson } from "./utils.mjs";
 
 export const BIOME_VERSION = "2.4.8";
+const PNPM_BUILD_CONFIG_SECTIONS = new Set([
+  "allowBuilds",
+  "onlyBuiltDependencies",
+  "neverBuiltDependencies",
+  "ignoredBuiltDependencies",
+]);
+
+export function packageManagerSpec(packageManager, version) {
+  const normalizedVersion = String(version ?? "")
+    .trim()
+    .split(/\s+/)[0];
+
+  return normalizedVersion ? `${packageManager}@${normalizedVersion}` : null;
+}
+
+export function detectPackageManagerVersion(packageManager) {
+  try {
+    return exec(`${packageManager} --version`);
+  } catch {
+    return null;
+  }
+}
+
+function parsePnpmBuildSection(section, line, allowBuilds) {
+  const trimmed = line.trim();
+  if (!trimmed) return;
+
+  if (section === "allowBuilds") {
+    const entry = trimmed.match(/^([^:#][^:]*):\s*(.*)$/);
+    if (entry) {
+      allowBuilds[entry[1].trim()] = entry[2].trim() === "true";
+    }
+    return;
+  }
+
+  const listItem = trimmed.match(/^-\s+(.+)$/);
+  if (!listItem) return;
+
+  allowBuilds[listItem[1].trim()] = section === "onlyBuiltDependencies";
+}
+
+export function pnpmWorkspaceWithAllowBuilds(existingContent, buildApprovals) {
+  const allowBuilds = {};
+  const retainedLines = [];
+  const lines = existingContent ? existingContent.split(/\r?\n/) : [];
+
+  for (let i = 0; i < lines.length; ) {
+    const section = lines[i].match(/^([A-Za-z][A-Za-z0-9-]*):\s*$/)?.[1];
+
+    if (!PNPM_BUILD_CONFIG_SECTIONS.has(section)) {
+      retainedLines.push(lines[i]);
+      i += 1;
+      continue;
+    }
+
+    i += 1;
+    while (
+      i < lines.length &&
+      (lines[i].trim() === "" || /^\s/.test(lines[i]))
+    ) {
+      parsePnpmBuildSection(section, lines[i], allowBuilds);
+      i += 1;
+    }
+  }
+
+  for (const [name, approved] of Object.entries(buildApprovals)) {
+    allowBuilds[name] = approved;
+  }
+
+  while (retainedLines.at(-1) === "") retainedLines.pop();
+
+  const buildEntries = Object.entries(allowBuilds).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  if (buildEntries.length > 0) {
+    if (retainedLines.length > 0) retainedLines.push("");
+    retainedLines.push(
+      "allowBuilds:",
+      ...buildEntries.map(([name, approved]) => `  ${name}: ${approved}`),
+    );
+  }
+
+  return retainedLines.length > 0 ? `${retainedLines.join("\n")}\n` : "";
+}
+
+export function writePnpmWorkspaceAllowBuilds(projectPath, buildApprovals) {
+  const workspacePath = join(projectPath, "pnpm-workspace.yaml");
+  const existingContent = existsSync(workspacePath)
+    ? readFileSync(workspacePath, "utf-8")
+    : "";
+  const nextContent = pnpmWorkspaceWithAllowBuilds(
+    existingContent,
+    buildApprovals,
+  );
+
+  if (nextContent) {
+    writeFileSync(workspacePath, nextContent);
+  }
+}
 
 export function getBasePackageDeps(framework) {
   if (framework === "nextjs") {
@@ -44,7 +143,7 @@ export function getBasePackageDeps(framework) {
 export async function setupPackages(
   projectPath,
   options,
-  { runner = run } = {},
+  { runner = run, versionResolver = detectPackageManagerVersion } = {},
 ) {
   const { framework, packageManager, shadcn, rnr, supabase, posthog, sentry } =
     options;
@@ -53,6 +152,13 @@ export async function setupPackages(
 
   // Use the pre-resolved name (handles "." in uppercase directories).
   pkg.name = options.resolvedName;
+  const selectedPackageManager = packageManagerSpec(
+    packageManager,
+    versionResolver(packageManager),
+  );
+  if (selectedPackageManager) {
+    pkg.packageManager = selectedPackageManager;
+  }
 
   // Add scripts
   pkg.scripts = {
@@ -83,12 +189,21 @@ export async function setupPackages(
       "pnpm prebuild && pnpm build:production --non-interactive && pnpm submit --non-interactive";
   }
 
-  // Allow supabase postinstall script to download the platform binary
-  if (supabase && packageManager === "pnpm") {
-    pkg.pnpm = { ...pkg.pnpm, onlyBuiltDependencies: ["supabase"] };
+  if (pkg.pnpm?.onlyBuiltDependencies) {
+    delete pkg.pnpm.onlyBuiltDependencies;
+    if (Object.keys(pkg.pnpm).length === 0) {
+      delete pkg.pnpm;
+    }
   }
 
   writeJson(pkgPath, pkg);
+
+  if (packageManager === "pnpm") {
+    writePnpmWorkspaceAllowBuilds(
+      projectPath,
+      supabase ? { supabase: true } : {},
+    );
+  }
 
   // Collect all deps to install
   const { deps: baseDeps, devDeps: baseDevDeps } =
