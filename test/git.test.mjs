@@ -31,6 +31,21 @@ function hasGit() {
   }
 }
 
+function runGitWithTestIdentity(cmd, args, opts = {}) {
+  return execFileSync(cmd, args, {
+    ...opts,
+    encoding: "utf-8",
+    stdio: "pipe",
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: "create-lumos-app tests",
+      GIT_AUTHOR_EMAIL: "tests@example.com",
+      GIT_COMMITTER_NAME: "create-lumos-app tests",
+      GIT_COMMITTER_EMAIL: "tests@example.com",
+    },
+  });
+}
+
 describe("initializeGitRepository", () => {
   it("runs git init, add, and commit in order for standalone projects", async () => {
     const calls = [];
@@ -287,6 +302,61 @@ describe("initializeGitRepository", () => {
         );
       } finally {
         rmSync(worktreePath, { recursive: true, force: true });
+        rmSync(projectPath, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it(
+    "replaces scaffold-created root Git history when requested",
+    { skip: !hasGit() },
+    async () => {
+      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
+
+      try {
+        writeFileSync(join(projectPath, ".gitignore"), ".env.local\n");
+        writeFileSync(join(projectPath, "package.json"), "{}\n");
+        runGitWithTestIdentity("git", ["init", "--initial-branch=main"], {
+          cwd: projectPath,
+        });
+        runGitWithTestIdentity("git", ["add", "package.json"], {
+          cwd: projectPath,
+        });
+        runGitWithTestIdentity("git", ["commit", "-m", "Initial commit"], {
+          cwd: projectPath,
+        });
+
+        writeFileSync(join(projectPath, ".worktreeinclude"), "/.env.local\n");
+        writeFileSync(join(projectPath, ".env.local"), "LOCAL_ONLY=1\n");
+        writeFileSync(join(projectPath, "README.md"), "# Test app\n");
+
+        const initialized = await initializeGitRepository(projectPath, {
+          runner: runGitWithTestIdentity,
+          resetExistingRootRepository: true,
+        });
+
+        assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+        assert.equal(
+          execFileSync("git", ["rev-list", "--count", "HEAD"], {
+            cwd: projectPath,
+            encoding: "utf-8",
+          }).trim(),
+          "1",
+        );
+
+        const head = execFileSync(
+          "git",
+          ["show", "--name-only", "--oneline", "HEAD"],
+          {
+            cwd: projectPath,
+            encoding: "utf-8",
+          },
+        );
+        assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
+        assert.ok(head.includes(".worktreeinclude"));
+        assert.ok(!head.includes(".env.local"));
+        assert.ok(!head.includes("Initial commit\n"));
+      } finally {
         rmSync(projectPath, { recursive: true, force: true });
       }
     },

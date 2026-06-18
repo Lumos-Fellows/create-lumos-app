@@ -84,7 +84,9 @@ export async function main(args) {
     await formatProject(targetDir, options);
 
     // 11. Initialize Git after all generated files are in place
-    await initializeGitRepository(targetDir);
+    await initializeGitRepository(targetDir, {
+      resetExistingRootRepository: !isCurrentDir(options.name),
+    });
 
     // 12. Print success
     printSuccess(options);

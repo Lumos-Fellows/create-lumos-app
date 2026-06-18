@@ -44,10 +44,10 @@ export function run(cmd, args = [], opts = {}) {
     });
     child.on("close", (code) => {
       debug(`  exit code: ${code}`);
-      if (code === 0) resolve();
+      const stderr = Buffer.concat(stderrChunks).toString().trim();
+      const stdout = Buffer.concat(stdoutChunks).toString().trim();
+      if (code === 0) resolve(stdout);
       else {
-        const stderr = Buffer.concat(stderrChunks).toString().trim();
-        const stdout = Buffer.concat(stdoutChunks).toString().trim();
         const output = [stderr, stdout].filter(Boolean).join("\n");
         reject(
           new Error(

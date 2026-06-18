@@ -1,3 +1,5 @@
+import { realpathSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { run } from "./utils.mjs";
 
@@ -32,16 +34,35 @@ async function initializeRepositoryOnMain(projectPath, runner) {
   }
 }
 
+function isSamePath(a, b) {
+  try {
+    return realpathSync(a) === realpathSync(b);
+  } catch {
+    return a === b;
+  }
+}
+
+function removeExistingRootRepository(projectPath) {
+  rmSync(join(projectPath, ".git"), { recursive: true, force: true });
+}
+
 export async function initializeGitRepository(
   projectPath,
-  { runner = run, logger = p.log } = {},
+  { runner = run, logger = p.log, resetExistingRootRepository = false } = {},
 ) {
   const existingRepositoryRoot = await getExistingGitRepositoryRoot(
     projectPath,
     runner,
   );
   if (existingRepositoryRoot) {
-    return GIT_INITIALIZATION_STATUS.SKIPPED_EXISTING_REPOSITORY;
+    if (
+      resetExistingRootRepository &&
+      isSamePath(existingRepositoryRoot, projectPath)
+    ) {
+      removeExistingRootRepository(projectPath);
+    } else {
+      return GIT_INITIALIZATION_STATUS.SKIPPED_EXISTING_REPOSITORY;
+    }
   }
 
   try {

@@ -3,8 +3,8 @@ import { run } from "./utils.mjs";
 
 /**
  * Run `supabase init` inside the scaffolded project.
- * The `supabase` package is installed as a dev dependency (via packages.mjs)
- * with pnpm.onlyBuiltDependencies allowing its postinstall to download the
+ * The `supabase` package is installed as a dev dependency with pnpm
+ * allowBuilds configured so its postinstall can download the
  * platform binary. Uses npx to resolve the locally installed package.
  * Creates the `supabase/` directory with config.toml and seed.sql.
  */
