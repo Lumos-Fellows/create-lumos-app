@@ -340,14 +340,21 @@ describe(
             ) {
               it("bundles the generated app with Metro", () => {
                 const expoBin = join(targetDir, "node_modules", ".bin", "expo");
+                const exportDir = mkdtempSync(
+                  join(tmpdir(), "create-lumos-app-expo-export-"),
+                );
 
                 try {
-                  execFileSync(expoBin, ["export", "--platform", "web"], {
-                    cwd: targetDir,
-                    env: { ...process.env, EXPO_NO_TELEMETRY: "1" },
-                    stdio: "pipe",
-                    shell: process.platform === "win32",
-                  });
+                  execFileSync(
+                    expoBin,
+                    ["export", "--platform", "web", "--output-dir", exportDir],
+                    {
+                      cwd: targetDir,
+                      env: { ...process.env, EXPO_NO_TELEMETRY: "1" },
+                      stdio: "pipe",
+                      shell: process.platform === "win32",
+                    },
+                  );
                 } catch (err) {
                   const output = [
                     err.stdout?.toString(),
@@ -356,6 +363,8 @@ describe(
                     .filter(Boolean)
                     .join("\n");
                   assert.fail(`Expo Metro bundle failed:\n${output}`);
+                } finally {
+                  rmSync(exportDir, { recursive: true, force: true });
                 }
               });
             }
