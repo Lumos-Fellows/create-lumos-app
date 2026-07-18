@@ -1,8 +1,11 @@
-import { PlatformPressable } from "@react-navigation/elements";
 import type { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import * as Haptics from "expo-haptics";
-import { Platform, type GestureResponderEvent } from "react-native";
+import {
+  Platform,
+  Pressable,
+  type GestureResponderEvent,
+} from "react-native";
 
 type StaticTabsScreenOptions = Extract<
   NonNullable<ComponentProps<typeof Tabs>["screenOptions"]>,
@@ -11,12 +14,12 @@ type StaticTabsScreenOptions = Extract<
 type HapticTabProps = Parameters<
   NonNullable<StaticTabsScreenOptions["tabBarButton"]>
 >[0];
-type PlatformPressableProps = ComponentProps<typeof PlatformPressable>;
+type PressableProps = ComponentProps<typeof Pressable>;
 
 export function HapticTab(props: HapticTabProps) {
   return (
-    <PlatformPressable
-      {...(props as PlatformPressableProps)}
+    <Pressable
+      {...(props as PressableProps)}
       onPressIn={(ev: GestureResponderEvent) => {
         if (Platform.OS === "ios") {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
