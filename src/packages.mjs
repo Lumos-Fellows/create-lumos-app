@@ -123,10 +123,12 @@ export function getBasePackageDeps(framework) {
     deps: [
       "zod",
       "@expo/vector-icons",
-      "@react-navigation/elements",
       "expo-dev-client",
       "expo-haptics",
       "expo-system-ui",
+      // NativeWind's Babel transform injects this import into app source.
+      // Keep it direct so strict package managers such as pnpm expose it.
+      "react-native-css-interop",
     ],
     devDeps: [
       `@biomejs/biome@${BIOME_VERSION}`,

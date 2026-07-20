@@ -28,9 +28,9 @@ describe("getBasePackageDeps", () => {
     const { deps, devDeps } = getBasePackageDeps("expo");
 
     assert.ok(deps.includes("@expo/vector-icons"));
-    assert.ok(deps.includes("@react-navigation/elements"));
-    assert.ok(!deps.includes("@react-navigation/bottom-tabs"));
+    assert.ok(!deps.some((dep) => dep.startsWith("@react-navigation/")));
     assert.ok(deps.includes("expo-haptics"));
+    assert.ok(deps.includes("react-native-css-interop"));
     assert.ok(devDeps.includes(`@biomejs/biome@${BIOME_VERSION}`));
     assert.ok(devDeps.includes("nativewind"));
   });

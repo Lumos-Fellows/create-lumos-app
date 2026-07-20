@@ -17,6 +17,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, relative, sep } from "node:path";
 import { after, describe, it } from "node:test";
@@ -313,6 +314,60 @@ describe(
                 "node_modules should exist",
               );
             });
+
+            if (options.framework === "expo") {
+              it("resolves NativeWind's injected JSX runtime from the project", () => {
+                const requireFromProject = createRequire(
+                  join(targetDir, "package.json"),
+                );
+
+                assert.doesNotThrow(
+                  () =>
+                    requireFromProject.resolve(
+                      "react-native-css-interop/jsx-runtime",
+                    ),
+                  "NativeWind's JSX runtime must be a direct dependency for pnpm and Metro",
+                );
+              });
+            }
+
+            if (
+              options.framework === "expo" &&
+              !options.rnr &&
+              !options.supabase &&
+              !options.posthog &&
+              !options.sentry
+            ) {
+              it("bundles the generated app with Metro", () => {
+                const expoBin = join(targetDir, "node_modules", ".bin", "expo");
+                const exportDir = mkdtempSync(
+                  join(tmpdir(), "create-lumos-app-expo-export-"),
+                );
+
+                try {
+                  execFileSync(
+                    expoBin,
+                    ["export", "--platform", "web", "--output-dir", exportDir],
+                    {
+                      cwd: targetDir,
+                      env: { ...process.env, EXPO_NO_TELEMETRY: "1" },
+                      stdio: "pipe",
+                      shell: process.platform === "win32",
+                    },
+                  );
+                } catch (err) {
+                  const output = [
+                    err.stdout?.toString(),
+                    err.stderr?.toString(),
+                  ]
+                    .filter(Boolean)
+                    .join("\n");
+                  assert.fail(`Expo Metro bundle failed:\n${output}`);
+                } finally {
+                  rmSync(exportDir, { recursive: true, force: true });
+                }
+              });
+            }
 
             if (options.packageManager === "pnpm") {
               it("has only pnpm-lock.yaml (no package-lock.json)", () => {
