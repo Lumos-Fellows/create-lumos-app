@@ -1,5 +1,5 @@
 import { defineRule } from "@oxlint/plugins";
-import { classifyUnsafeDictionary, classifyUnsafeDictionaryValue, createTypeEnvironment } from "../shared/dictionary-types.mjs";
+import { classifyUnsafeDictionary, classifyUnsafeDictionaryValue, createTypeEnvironment, } from "../shared/dictionary-types.mjs";
 import { visibleTypeAlias } from "../shared/type-alias-resolution.mjs";
 const typeNodeKinds = new Set([
     "JSDocNonNullableType",
@@ -38,7 +38,7 @@ const typeNodeKinds = new Set([
     "TSUndefinedKeyword",
     "TSUnionType",
     "TSUnknownKeyword",
-    "TSVoidKeyword"
+    "TSVoidKeyword",
 ]);
 function isTypeNode(node) {
     return typeNodeKinds.has(node.type);
@@ -48,77 +48,87 @@ function typeReferenceName(type) {
 }
 function isInsideTypeAliasDeclaration(node) {
     let current = node.parent;
-    while(current !== null && current.type !== "Program"){
-        if (current.type === "TSTypeAliasDeclaration") return true;
+    while (current !== null && current.type !== "Program") {
+        if (current.type === "TSTypeAliasDeclaration")
+            return true;
         current = current.parent;
     }
     return false;
 }
 function isPlainAliasConsumerUse(node, environment) {
-    if (node.type !== "TSTypeReference" || node.typeArguments?.params.length) return false;
+    if (node.type !== "TSTypeReference" || node.typeArguments?.params.length)
+        return false;
     const name = typeReferenceName(node);
-    return name !== null && visibleTypeAlias(name, node, environment.typeAliases) !== null && !isInsideTypeAliasDeclaration(node);
+    return (name !== null &&
+        visibleTypeAlias(name, node, environment.typeAliases) !== null &&
+        !isInsideTypeAliasDeclaration(node));
 }
 function isInsideTypeParameterConstraint(node) {
     let child = node;
     let parent = child.parent;
-    while(parent !== null && parent.type !== "Program"){
-        if (parent.type === "TSTypeParameter" && parent.constraint === child) return true;
+    while (parent !== null && parent.type !== "Program") {
+        if (parent.type === "TSTypeParameter" && parent.constraint === child)
+            return true;
         child = parent;
         parent = child.parent;
     }
     return false;
 }
 function shouldReportType(node, environment) {
-    if (isInsideTypeParameterConstraint(node)) return false;
-    if (isPlainAliasConsumerUse(node, environment)) return false;
-    if (classifyUnsafeDictionary(node, environment) === null) return false;
+    if (isInsideTypeParameterConstraint(node))
+        return false;
+    if (isPlainAliasConsumerUse(node, environment))
+        return false;
+    if (classifyUnsafeDictionary(node, environment) === null)
+        return false;
     let current = node.parent;
-    while(current !== null && current.type !== "Program"){
-        if (isTypeNode(current) && classifyUnsafeDictionary(current, environment) !== null) return false;
+    while (current !== null && current.type !== "Program") {
+        if (isTypeNode(current) && classifyUnsafeDictionary(current, environment) !== null)
+            return false;
         current = current.parent;
     }
     return true;
 }
+/** Disallow object-dictionary contracts whose direct value type is an unsafe escape hatch. */
 export const noUnsafeDictionaryTypeRule = defineRule({
     meta: {
         type: "problem",
         docs: {
-            description: "Disallow object-dictionary contracts whose direct value type is unknown, any, object, {}, or a union/alias containing one of those escape hatches."
+            description: "Disallow object-dictionary contracts whose direct value type is unknown, any, object, {}, or a union/alias containing one of those escape hatches.",
         },
         messages: {
-            unsafeDictionary: "This dictionary's {{value}} value type gives callers no concrete value contract. Use an owner/schema-derived value type; parse external payloads before insertion."
-        }
+            unsafeDictionary: "This dictionary's {{value}} value type gives callers no concrete value contract. Use an owner/schema-derived value type; parse external payloads before insertion.",
+        },
     },
-    createOnce (context) {
+    createOnce(context) {
         let environment = null;
-        const report = (node, value)=>{
-            context.report({
-                node,
-                messageId: "unsafeDictionary",
-                data: {
-                    value
-                }
-            });
+        const report = (node, value) => {
+            context.report({ node, messageId: "unsafeDictionary", data: { value } });
         };
-        const reportIfUnsafe = (node)=>{
-            if (environment === null || !shouldReportType(node, environment)) return;
+        const reportIfUnsafe = (node) => {
+            if (environment === null || !shouldReportType(node, environment))
+                return;
             const unsafe = classifyUnsafeDictionary(node, environment);
-            if (unsafe === null) return;
+            if (unsafe === null)
+                return;
             report(node, unsafe.unsafeValue);
         };
         return {
-            Program (node) {
+            Program(node) {
                 environment = createTypeEnvironment(node, context.sourceCode.visitorKeys);
             },
             TSTypeReference: reportIfUnsafe,
             TSTypeLiteral: reportIfUnsafe,
             TSMappedType: reportIfUnsafe,
-            TSIndexSignature (node) {
-                if (environment === null || node.typeAnnotation === null || node.parent.type === "TSTypeLiteral") return;
+            TSIndexSignature(node) {
+                if (environment === null ||
+                    node.typeAnnotation === null ||
+                    node.parent.type === "TSTypeLiteral")
+                    return;
                 const unsafe = classifyUnsafeDictionaryValue(node.typeAnnotation.typeAnnotation, environment);
-                if (unsafe !== null) report(node, unsafe.unsafeValue);
-            }
+                if (unsafe !== null)
+                    report(node, unsafe.unsafeValue);
+            },
         };
-    }
+    },
 });

@@ -2,6 +2,8 @@
 
 ## Working agreements
 
+- Keep maintained code typechecked, including verification helpers and JavaScript configuration. Use TypeScript for new code; do not bypass checks with `any` or compiler suppression comments.
+
 - Keep shared instructions here and in `.agents/rules/`. `CLAUDE.md` must contain only `@AGENTS.md`; reserve `.claude/` for Claude-specific configuration and hook wiring.
 - Use the package manager recorded in `package.json` and its lockfile. After code changes, run its `verify` script and resolve failures before finishing.
 - Integrations must gracefully no-op without environment variables so the app can start before external services are configured.

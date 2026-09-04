@@ -1,7 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 function unwrapParentheses(node) {
     let current = node;
-    while(current.type === "ParenthesizedExpression"){
+    while (current.type === "ParenthesizedExpression") {
         current = current.expression;
     }
     return current;
@@ -11,29 +11,30 @@ function isEmptyObjectExpression(node) {
 }
 function isConditionalEmptyObjectSpread(node) {
     const conditional = unwrapParentheses(node);
-    return conditional.type === "ConditionalExpression" && (isEmptyObjectExpression(conditional.consequent) || isEmptyObjectExpression(conditional.alternate));
+    return (conditional.type === "ConditionalExpression" &&
+        (isEmptyObjectExpression(conditional.consequent) ||
+            isEmptyObjectExpression(conditional.alternate)));
 }
+/** Ban conditional empty-object spreads without changing their omission semantics. */
 export const noConditionalEmptyObjectSpreadRule = defineRule({
     meta: {
         type: "suggestion",
         docs: {
-            description: "Disallow object spreads that conditionally spread an empty object to omit fields."
+            description: "Disallow object spreads that conditionally spread an empty object to omit fields.",
         },
         messages: {
-            avoid: "This conditional spread hides property omission behind an empty object. Build the object in separate statements and add the property only when present."
-        }
+            avoid: "This conditional spread hides property omission behind an empty object. Build the object in separate statements and add the property only when present.",
+        },
     },
-    createOnce (context) {
+    createOnce(context) {
         return {
-            SpreadElement (node) {
-                if (node.parent.type !== "ObjectExpression") return;
+            SpreadElement(node) {
+                if (node.parent.type !== "ObjectExpression")
+                    return;
                 if (isConditionalEmptyObjectSpread(node.argument)) {
-                    context.report({
-                        node,
-                        messageId: "avoid"
-                    });
+                    context.report({ node, messageId: "avoid" });
                 }
-            }
+            },
         };
-    }
+    },
 });

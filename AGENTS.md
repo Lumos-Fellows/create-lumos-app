@@ -6,7 +6,7 @@ This CLI helps Lumos Fellows students start building with as little setup confus
 
 - Keep shared agent instructions here and in `.agents/rules/`. `CLAUDE.md` must contain only `@AGENTS.md`; `.claude/` holds Claude-specific configuration and hook wiring.
 - Use pnpm for work on this repo.
-- After changing `src/` or `templates/`, run `pnpm test:unit`, `pnpm lint`, and `pnpm test`. `pnpm verify` runs the complete verification sequence and is also used by Claude's Stop hook. CI must enforce checks independently of the harness.
+- After changing `src/` or `templates/`, run `pnpm typecheck`, `pnpm test:unit`, `pnpm lint`, and `pnpm test`. `pnpm verify` runs the complete verification sequence and is also used by Claude's Stop hook. CI must enforce checks independently of the harness.
 - Include a Changeset in every PR; use an empty Changeset for changes that intentionally do not need a release.
 
 ## Documentation

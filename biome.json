@@ -27,6 +27,14 @@
     }
   },
   "files": {
-    "includes": ["bin/**", "src/**", "test/**", "biome.json", "package.json"]
+    "includes": [
+      "bin/**",
+      "src/**",
+      "test/**",
+      "biome.json",
+      "package.json",
+      "scripts/**",
+      "tsconfig*.json"
+    ]
   }
 }

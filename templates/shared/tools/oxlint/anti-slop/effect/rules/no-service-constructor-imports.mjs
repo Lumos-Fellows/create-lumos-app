@@ -5,37 +5,40 @@ function isProjectLocalImport(source) {
     return source.startsWith("./") || source.startsWith("../");
 }
 function getImportedName(specifier) {
-    if (specifier.imported.type === "Identifier") return specifier.imported.name;
+    if (specifier.imported.type === "Identifier")
+        return specifier.imported.name;
     return specifier.imported.value;
 }
+/** Keep dependency-bearing Effect service constructors local to their owning capability modules. */
 export const noServiceConstructorImportsRule = defineRule({
     meta: {
         type: "problem",
         docs: {
-            description: "Disallow project-local make<CapabilityName> imports outside test and spec files."
+            description: "Disallow project-local make<CapabilityName> imports outside test and spec files.",
         },
         messages: {
-            serviceConstructorImport: 'Do not import Effect service constructor "{{name}}" into runtime code. Import the owning Layer, yield the contextual service, and allow its requirements to propagate to the composition root.'
-        }
+            serviceConstructorImport: 'Do not import Effect service constructor "{{name}}" into runtime code. Import the owning Layer, yield the contextual service, and allow its requirements to propagate to the composition root.',
+        },
     },
-    create (context) {
+    create(context) {
         const isTestFile = TEST_FILE.test(context.filename.replaceAll("\\", "/"));
         return {
-            ImportDeclaration (node) {
-                if (isTestFile || !isProjectLocalImport(node.source.value)) return;
-                for (const specifier of node.specifiers){
-                    if (specifier.type !== "ImportSpecifier") continue;
+            ImportDeclaration(node) {
+                if (isTestFile || !isProjectLocalImport(node.source.value))
+                    return;
+                for (const specifier of node.specifiers) {
+                    if (specifier.type !== "ImportSpecifier")
+                        continue;
                     const importedName = getImportedName(specifier);
-                    if (!SERVICE_CONSTRUCTOR_NAME.test(importedName)) continue;
+                    if (!SERVICE_CONSTRUCTOR_NAME.test(importedName))
+                        continue;
                     context.report({
                         node: specifier,
                         messageId: "serviceConstructorImport",
-                        data: {
-                            name: importedName
-                        }
+                        data: { name: importedName },
                     });
                 }
-            }
+            },
         };
-    }
+    },
 });

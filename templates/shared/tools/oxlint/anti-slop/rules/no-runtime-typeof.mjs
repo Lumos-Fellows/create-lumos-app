@@ -1,10 +1,12 @@
 import { defineRule } from "@oxlint/plugins";
 function isRuntimeFunction(node) {
-    return node.type === "ArrowFunctionExpression" || node.type === "FunctionDeclaration" || node.type === "FunctionExpression";
+    return (node.type === "ArrowFunctionExpression" ||
+        node.type === "FunctionDeclaration" ||
+        node.type === "FunctionExpression");
 }
 function isInsideTypeGuard(node) {
     let current = node.parent;
-    while(current !== null && current.type !== "Program"){
+    while (current !== null && current.type !== "Program") {
         if (isRuntimeFunction(current)) {
             return current.returnType?.typeAnnotation.type === "TSTypePredicate";
         }
@@ -12,56 +14,51 @@ function isInsideTypeGuard(node) {
     }
     return false;
 }
+/** Return whether typeof safely probes for the existence of a possibly absent binding. */
 function isExistenceProbe(node) {
     const parent = node.parent;
-    if (parent.type !== "BinaryExpression") return false;
-    if (![
-        "===",
-        "!==",
-        "==",
-        "!="
-    ].includes(parent.operator)) return false;
+    if (parent.type !== "BinaryExpression")
+        return false;
+    if (!["===", "!==", "==", "!="].includes(parent.operator))
+        return false;
     const other = parent.left === node ? parent.right : parent.left;
     return other.type === "Literal" && other.value === "undefined";
 }
+/** Disallow runtime typeof checks that narrow unparsed values instead of decoding them. */
 export const noRuntimeTypeofRule = defineRule({
     meta: {
         type: "problem",
         docs: {
-            description: "Disallow runtime typeof checks; external values must be decoded into meaningful types at their I/O boundary."
+            description: "Disallow runtime typeof checks; external values must be decoded into meaningful types at their I/O boundary.",
         },
         messages: {
-            runtimeTypeof: "A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value."
+            runtimeTypeof: "A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.",
         },
         schema: [
             {
                 type: "object",
                 properties: {
-                    allowInTypeGuards: {
-                        type: "boolean"
-                    }
+                    allowInTypeGuards: { type: "boolean" },
                 },
-                additionalProperties: false
-            }
+                additionalProperties: false,
+            },
         ],
-        defaultOptions: [
-            {
-                allowInTypeGuards: false
-            }
-        ]
+        defaultOptions: [{ allowInTypeGuards: false }],
     },
-    createOnce (context) {
+    createOnce(context) {
         return {
-            UnaryExpression (node) {
+            UnaryExpression(node) {
                 const option = context.options?.[0];
-                const allowInTypeGuards = typeof option === "object" && option !== null && !Array.isArray(option) && option.allowInTypeGuards === true;
-                if (node.operator === "typeof" && !isExistenceProbe(node) && (!allowInTypeGuards || !isInsideTypeGuard(node))) {
-                    context.report({
-                        node,
-                        messageId: "runtimeTypeof"
-                    });
+                const allowInTypeGuards = typeof option === "object" &&
+                    option !== null &&
+                    !Array.isArray(option) &&
+                    option.allowInTypeGuards === true;
+                if (node.operator === "typeof" &&
+                    !isExistenceProbe(node) &&
+                    (!allowInTypeGuards || !isInsideTypeGuard(node))) {
+                    context.report({ node, messageId: "runtimeTypeof" });
                 }
-            }
+            },
         };
-    }
+    },
 });

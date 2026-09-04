@@ -1,8 +1,12 @@
+/** Return whether a type is or contains TypeScript's absorbing unknown top type. */
 export function containsUnknownType(type) {
-    if (type.type === "TSUnknownKeyword") return true;
-    if (type.type === "TSParenthesizedType") return containsUnknownType(type.typeAnnotation);
+    if (type.type === "TSUnknownKeyword")
+        return true;
+    if (type.type === "TSParenthesizedType")
+        return containsUnknownType(type.typeAnnotation);
     return type.type === "TSUnionType" && type.types.some(containsUnknownType);
 }
+/** Return the TypeScript annotation attached to a function parameter or its wrapped binding. */
 export function functionParameterTypeAnnotation(parameter) {
     if (parameter.type === "TSParameterProperty") {
         return functionParameterTypeAnnotation(parameter.parameter);
@@ -15,6 +19,7 @@ export function functionParameterTypeAnnotation(parameter) {
     }
     return parameter.typeAnnotation;
 }
+/** Return only a function parameter's local binding, excluding its annotation and default value. */
 export function functionParameterBindingName(parameter, sourceCode) {
     if (parameter.type === "TSParameterProperty") {
         return functionParameterBindingName(parameter.parameter, sourceCode);
@@ -25,8 +30,11 @@ export function functionParameterBindingName(parameter, sourceCode) {
     if (parameter.type === "RestElement") {
         return functionParameterBindingName(parameter.argument, sourceCode);
     }
-    if (parameter.type === "Identifier") return parameter.name;
+    if (parameter.type === "Identifier")
+        return parameter.name;
     const sourceText = sourceCode.getText(parameter);
     const annotationStart = parameter.typeAnnotation?.start;
-    return annotationStart === undefined ? sourceText : sourceText.slice(0, annotationStart - parameter.start).trimEnd();
+    return annotationStart === undefined
+        ? sourceText
+        : sourceText.slice(0, annotationStart - parameter.start).trimEnd();
 }
