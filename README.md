@@ -68,6 +68,29 @@ node bin/create-lumos-app.mjs my-test-app
 npm publish --dry-run
 ```
 
+## Releasing
+
+Add a changeset for each user-facing change and commit the generated file with
+the implementation:
+
+```bash
+pnpm changeset
+```
+
+When that commit reaches `main` and CI passes, the publish workflow applies the
+pending changesets, commits the generated version and changelog, publishes the
+new version to npm through trusted publishing, and creates the corresponding
+GitHub release.
+
+After the publish workflow is on `main`, configure a GitHub Actions trusted
+publisher for `create-lumos-app` on npm with these values:
+
+- Organization: `Lumos-Fellows`
+- Repository: `create-lumos-app`
+- Workflow: `publish.yml`
+- Environment: `npm`
+- Allowed action: `npm publish`
+
 ## Architecture
 
 - Plain ESM JavaScript (`.mjs`) — no build step

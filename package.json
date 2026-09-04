@@ -19,7 +19,8 @@
     "format": "biome format --write bin src test biome.json package.json",
     "check": "biome check --write bin src test",
     "prerelease": "pnpm test:unit && pnpm lint",
-    "release": "npm version patch && git push --follow-tags && npm publish --access public"
+    "changeset": "changeset",
+    "release": "changeset publish"
   },
   "keywords": [
     "create",
@@ -31,10 +32,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/lumos-fellows/create-lumos-app.git"
+    "url": "git+https://github.com/Lumos-Fellows/create-lumos-app.git"
   },
   "author": "Lumos Fellows",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "picocolors": "^1.1.1"
@@ -43,6 +48,7 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.0",
     "@biomejs/biome": "2.0.0"
   },
   "packageManager": "pnpm@10.29.3+sha256.a74f4dbd3f5a7ca874d004135271f0b697b683bf1fd2fc2133961161cd25b29c"
