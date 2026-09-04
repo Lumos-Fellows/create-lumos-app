@@ -14,10 +14,10 @@
   "scripts": {
     "start": "node bin/cli.js",
     "test": "node --test --test-force-exit test/e2e.test.mjs",
-    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/scaffold.test.mjs test/git.test.mjs test/packages.test.mjs test/format.test.mjs test/templates.test.mjs",
-    "lint": "biome lint bin src test",
+    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/scaffold.test.mjs test/git.test.mjs test/packages.test.mjs test/format.test.mjs test/templates.test.mjs test/anti-slop.test.mjs",
+    "lint": "biome lint bin src test && oxlint bin src test",
     "format": "biome format --write bin src test biome.json package.json",
-    "check": "biome check --write bin src test",
+    "check": "biome check --write bin src test && oxlint bin src test",
     "prerelease": "pnpm test:unit && pnpm lint",
     "changeset": "changeset",
     "release": "changeset publish"
@@ -48,8 +48,10 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.0.0",
     "@changesets/cli": "3.0.0",
-    "@biomejs/biome": "2.0.0"
+    "@oxlint/plugins": "1.81.0",
+    "oxlint": "1.81.0"
   },
   "packageManager": "pnpm@10.29.3+sha256.a74f4dbd3f5a7ca874d004135271f0b697b683bf1fd2fc2133961161cd25b29c"
 }

@@ -5,7 +5,7 @@
  */
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -271,6 +271,34 @@ describe("Generated Claude Stop hook", () => {
     "hooks",
     "stop-checks.sh",
   );
+
+  it("runs the project's lint script and blocks when that script fails", () => {
+    const projectPath = mkdtempSync(
+      join(tmpdir(), "create-lumos-app-hook-lint-"),
+    );
+    try {
+      mkdirSync(join(projectPath, "node_modules"));
+      writeFileSync(
+        join(projectPath, "package.json"),
+        JSON.stringify({
+          scripts: {
+            format: 'node -e "process.exit(0)"',
+            lint: "node -e \"require('node:fs').writeFileSync('lint-ran', 'yes'); process.exit(1)\"",
+          },
+        }),
+      );
+      const result = spawnSync("sh", [hookPath], {
+        cwd: projectPath,
+        encoding: "utf-8",
+      });
+      assert.ifError(result.error);
+      assert.equal(result.status, 2, result.stdout + result.stderr);
+      assert.ok(existsSync(join(projectPath, "lint-ran")));
+      assert.match(result.stderr, /lint FAILED/);
+    } finally {
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
 
   it("is referenced by both framework settings files", () => {
     for (const settingsPath of [

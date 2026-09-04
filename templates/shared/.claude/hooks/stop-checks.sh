@@ -30,14 +30,6 @@ run_script() {
   "$PM" run "$1"
 }
 
-run_exec() {
-  if [ "$PM" = "npm" ]; then
-    npm exec -- "$@"
-  else
-    pnpm exec "$@"
-  fi
-}
-
 run_check() {
   name="$1"
   shift
@@ -52,7 +44,7 @@ run_check() {
 }
 
 run_check "format" run_script format
-run_check "lint" run_exec biome check --error-on-warnings .
+run_check "lint" run_script lint
 if has_script typecheck; then run_check "typecheck" env SKIP_ENV_VALIDATION=true "$PM" run typecheck; fi
 if has_script knip; then run_check "knip" "$PM" run knip; fi
 if has_script test; then run_check "test" env SKIP_ENV_VALIDATION=true "$PM" run test; fi

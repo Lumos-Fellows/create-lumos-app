@@ -58,7 +58,8 @@ Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-ap
 - **Framework**: ${isNext ? "Next.js (App Router)" : "Expo (React Native)"}
 - **Language**: TypeScript
 - **Styling**: ${isNext ? (shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4") : rnr ? "NativeWind (Tailwind CSS) + React Native Reusables" : "NativeWind (Tailwind CSS)"}
-- **Linter/Formatter**: Biome
+- **Linting**: Biome + [anti-slop](https://github.com/dmmulroy/anti-slop) (Oxlint)
+- **Formatting**: Biome
 ${integrations.length > 0 ? `- **Integrations**: ${integrations.join(", ")}` : ""}
 
 ## Getting Started
@@ -100,7 +101,7 @@ ${
 | \`${runCmd} prebuild\` | Generate native projects |`
 }
 | \`${runCmd} format\` | Format code with Biome |
-| \`${runCmd} lint\` | Lint code with Biome |
+| \`${runCmd} lint\` | Check code with Biome and anti-slop (Oxlint) |
 | \`${runCmd} typecheck\` | Run TypeScript type checking |
 
 ## Optional: Doppler for Secrets Management

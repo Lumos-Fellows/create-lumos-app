@@ -18,12 +18,25 @@ import { describe, it } from "node:test";
 import {
   BIOME_VERSION,
   getBasePackageDeps,
+  OXLINT_VERSION,
   packageManagerSpec,
   pnpmWorkspaceWithAllowBuilds,
   setupPackages,
 } from "../src/packages.mjs";
 
 describe("getBasePackageDeps", () => {
+  for (const framework of ["nextjs", "expo"]) {
+    it(`pins matching Oxlint packages for ${framework}`, () => {
+      const { devDeps } = getBasePackageDeps(framework);
+      assert.ok(devDeps.includes(`oxlint@${OXLINT_VERSION}`));
+      assert.ok(devDeps.includes(`@oxlint/plugins@${OXLINT_VERSION}`));
+      const repo = JSON.parse(
+        readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+      );
+      assert.equal(repo.devDependencies.oxlint, OXLINT_VERSION);
+      assert.equal(repo.devDependencies["@oxlint/plugins"], OXLINT_VERSION);
+    });
+  }
   it("includes Expo packages imported by the generated base template", () => {
     const { deps, devDeps } = getBasePackageDeps("expo");
 
@@ -44,6 +57,44 @@ describe("getBasePackageDeps", () => {
 });
 
 describe("setupPackages", () => {
+  for (const packageManager of ["pnpm", "npm"]) {
+    it(`installs exact lint dependencies and wires both linters with ${packageManager}`, async () => {
+      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-lint-"));
+      try {
+        writeFileSync(
+          join(projectPath, "package.json"),
+          JSON.stringify({ scripts: { dev: "next dev" } }),
+        );
+        const calls = [];
+        await setupPackages(
+          projectPath,
+          { framework: "nextjs", resolvedName: "lint-test", packageManager },
+          {
+            runner: async (command, args) => {
+              calls.push({ command, args });
+            },
+            versionResolver: () => "10.29.3",
+          },
+        );
+        const install = calls.find(({ args }) =>
+          args.includes(`oxlint@${OXLINT_VERSION}`),
+        );
+        assert.equal(install.command, packageManager);
+        assert.ok(install.args.includes("--save-exact"));
+        assert.ok(install.args.includes(`@oxlint/plugins@${OXLINT_VERSION}`));
+        const pkg = JSON.parse(
+          readFileSync(join(projectPath, "package.json"), "utf-8"),
+        );
+        assert.equal(
+          pkg.scripts.lint,
+          "biome check --error-on-warnings . && oxlint .",
+        );
+        assert.equal(pkg.scripts.dev, "next dev");
+      } finally {
+        rmSync(projectPath, { recursive: true, force: true });
+      }
+    });
+  }
   it("pins the selected package manager in generated package.json", async () => {
     const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-pm-"));
 

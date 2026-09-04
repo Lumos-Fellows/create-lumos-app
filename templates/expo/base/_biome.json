@@ -1,7 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
   "files": {
-    "includes": ["**", "!.expo", "!.agents", "!.claude/worktrees"]
+    "includes": [
+      "**",
+      "!.expo",
+      "!.agents",
+      "!.claude/worktrees",
+      "!tools/oxlint/anti-slop"
+    ]
   },
   "assist": {
     "actions": {

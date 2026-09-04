@@ -28,7 +28,7 @@ import {
   initializeGitRepository,
 } from "../src/git.mjs";
 import { applyOverlay } from "../src/overlay.mjs";
-import { setupPackages } from "../src/packages.mjs";
+import { OXLINT_VERSION, setupPackages } from "../src/packages.mjs";
 import { generateReadme } from "../src/readme.mjs";
 import { installRnr } from "../src/rnr.mjs";
 import { scaffold } from "../src/scaffold.mjs";
@@ -39,7 +39,10 @@ import { projectDir } from "../src/utils.mjs";
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
 
-// Parallel framework tests must not race on Supabase's shared telemetry file.
+// Expo's nested-repository Git prompt does not honor --yes; keep local runs headless.
+process.env.CI = "1";
+
+// Test runs must not race on Supabase's shared telemetry file.
 process.env.SUPABASE_TELEMETRY_DISABLED = "1";
 
 const SKIP_DIRS = new Set(["node_modules", ".next", ".expo", ".git"]);
@@ -222,9 +225,8 @@ const cases = [
 // Each scaffold gets its own budget for registry downloads and package installs.
 const CASE_TIMEOUT = 300_000;
 
-// Group cases by framework so same-framework tests run sequentially
-// (they share the same npx cache and race on it), while different
-// frameworks run in parallel.
+// Group cases by framework for readable output. Keep nested scaffold, build,
+// and lint processes sequential for stable Node test-runner output.
 const frameworkGroups = {};
 for (const c of cases) {
   const fw = c.options.framework;
@@ -234,7 +236,7 @@ for (const c of cases) {
 
 describe(
   "e2e scaffolding",
-  { concurrency: Object.keys(frameworkGroups).length },
+  { concurrency: 1, timeout: CASE_TIMEOUT * cases.length },
   () => {
     for (const [framework, group] of Object.entries(frameworkGroups)) {
       describe(framework, { concurrency: 1 }, () => {
@@ -316,6 +318,18 @@ describe(
               assert.ok(
                 existsSync(join(targetDir, "node_modules")),
                 "node_modules should exist",
+              );
+              const pkg = JSON.parse(
+                readFileSync(join(targetDir, "package.json"), "utf-8"),
+              );
+              assert.equal(pkg.devDependencies.oxlint, OXLINT_VERSION);
+              assert.equal(
+                pkg.devDependencies["@oxlint/plugins"],
+                OXLINT_VERSION,
+              );
+              assert.ok(existsSync(join(targetDir, ".oxlintrc.json")));
+              assert.ok(
+                existsSync(join(targetDir, "tools/oxlint/anti-slop/index.mjs")),
               );
             });
 
@@ -617,10 +631,11 @@ describe(
               }
             });
 
-            it("passes Biome check", () => {
-              const biomeBin = join(targetDir, "node_modules", ".bin", "biome");
+            it("passes the generated Biome and anti-slop lint script", () => {
+              // Isolate Oxlint from the parent repo's test-*-e2e gitignore entry.
+              execFileSync("git", ["init", "--quiet"], { cwd: targetDir });
               try {
-                execFileSync(biomeBin, ["check", "."], {
+                execFileSync(options.packageManager, ["run", "lint"], {
                   cwd: targetDir,
                   stdio: "pipe",
                   shell: process.platform === "win32",
@@ -629,7 +644,7 @@ describe(
                 const output = [err.stdout?.toString(), err.stderr?.toString()]
                   .filter(Boolean)
                   .join("\n");
-                assert.fail(`biome check failed:\n${output}`);
+                assert.fail(`lint failed:\n${output}`);
               }
             });
           });

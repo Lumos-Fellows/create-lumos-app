@@ -5,6 +5,7 @@ import { getEnvVars, getIntegrationDeps } from "./integrations.mjs";
 import { exec, readJson, run, writeJson } from "./utils.mjs";
 
 export const BIOME_VERSION = "2.4.8";
+export const OXLINT_VERSION = "1.81.0";
 const PNPM_BUILD_CONFIG_SECTIONS = new Set([
   "allowBuilds",
   "onlyBuiltDependencies",
@@ -115,7 +116,11 @@ export function getBasePackageDeps(framework) {
         "zod",
         "next-themes",
       ],
-      devDeps: [`@biomejs/biome@${BIOME_VERSION}`],
+      devDeps: [
+        `@biomejs/biome@${BIOME_VERSION}`,
+        `oxlint@${OXLINT_VERSION}`,
+        `@oxlint/plugins@${OXLINT_VERSION}`,
+      ],
     };
   }
 
@@ -132,6 +137,8 @@ export function getBasePackageDeps(framework) {
     ],
     devDeps: [
       `@biomejs/biome@${BIOME_VERSION}`,
+      `oxlint@${OXLINT_VERSION}`,
+      `@oxlint/plugins@${OXLINT_VERSION}`,
       "nativewind",
       "tailwindcss@3",
       "tailwindcss-animate",
@@ -166,7 +173,7 @@ export async function setupPackages(
   pkg.scripts = {
     ...pkg.scripts,
     format: "biome format --write .",
-    lint: "biome check .",
+    lint: "biome check --error-on-warnings . && oxlint .",
     typecheck: "tsc --noEmit",
   };
 
@@ -232,9 +239,13 @@ export async function setupPackages(
   if (allDevDeps.length > 0) {
     const devFlag = packageManager === "pnpm" ? "-D" : "--save-dev";
     s.start("Installing dev dependencies…");
-    await runner(packageManager, [addArg, devFlag, ...allDevDeps], {
-      cwd: projectPath,
-    });
+    await runner(
+      packageManager,
+      [addArg, devFlag, "--save-exact", ...allDevDeps],
+      {
+        cwd: projectPath,
+      },
+    );
     s.stop("Dev dependencies installed");
   }
 
