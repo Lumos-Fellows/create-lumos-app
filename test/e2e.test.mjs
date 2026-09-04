@@ -39,6 +39,9 @@ import { projectDir } from "../src/utils.mjs";
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
 
+// Parallel framework tests must not race on Supabase's shared telemetry file.
+process.env.SUPABASE_TELEMETRY_DISABLED = "1";
+
 const SKIP_DIRS = new Set(["node_modules", ".next", ".expo", ".git"]);
 
 function walkFiles(dir) {
@@ -216,7 +219,8 @@ const cases = [
 
 // ── tests ────────────────────────────────────────────────────────────────────
 
-const TEST_TIMEOUT = 300_000;
+// Each scaffold gets its own budget for registry downloads and package installs.
+const CASE_TIMEOUT = 300_000;
 
 // Group cases by framework so same-framework tests run sequentially
 // (they share the same npx cache and race on it), while different
@@ -230,12 +234,12 @@ for (const c of cases) {
 
 describe(
   "e2e scaffolding",
-  { concurrency: Object.keys(frameworkGroups).length, timeout: TEST_TIMEOUT },
+  { concurrency: Object.keys(frameworkGroups).length },
   () => {
     for (const [framework, group] of Object.entries(frameworkGroups)) {
       describe(framework, { concurrency: 1 }, () => {
         for (const { label, options } of group) {
-          describe(label, { concurrency: 1 }, () => {
+          describe(label, { concurrency: 1, timeout: CASE_TIMEOUT }, () => {
             const targetDir = projectDir(options.name);
 
             // clean slate before and after
