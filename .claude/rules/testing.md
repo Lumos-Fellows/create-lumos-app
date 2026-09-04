@@ -25,4 +25,6 @@ node bin/create-lumos-app.mjs test-app
 
 ## What the tests cover
 
-The e2e test scaffolds full Next.js and Expo projects non-interactively, verifying scaffold → overlay → package install → README generation. CI runs this on Node 18/20/22 via `.github/workflows/ci.yml`.
+The e2e test scaffolds full Next.js and Expo projects non-interactively, verifying scaffold → overlay → package install → README generation. CI runs this on Node 20/22 on Linux, Windows, and macOS via `.github/workflows/ci.yml`. Each scaffold case has a five-minute timeout, and CI bounds each matrix job to 20 minutes.
+
+CI also runs lint and unit tests on Node 24. Pull requests must include a new Changeset; see `.changeset/README.md` for release and intentional no-release changes.
