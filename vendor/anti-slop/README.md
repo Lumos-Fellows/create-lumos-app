@@ -8,17 +8,21 @@ All 15 generic rules are enabled as errors in `.oxlintrc.json`. Biome handles
 general linting and formatting; Oxlint runs the anti-slop rules. The optional
 Effect plugin is included but is not enabled for these templates.
 
-This copy is JavaScript compiled from TypeScript checked in create-lumos-app's
-`vendor/anti-slop/`. Rule behavior is unchanged. Node 20 can load the emitted
-`.mjs` files without a TypeScript loader; apps do not need to compile the plugin.
-Biome and Oxlint exclude this generated directory.
+create-lumos-app keeps the TypeScript source in `vendor/anti-slop/` and generates
+JavaScript for its app templates. Rule behavior is unchanged. Node 20 can load
+those `.mjs` files without a TypeScript loader; apps receive the compiled plugin
+and do not need to build it. Biome and Oxlint exclude the generated plugin.
+
+The generated template directory is ignored by Git. Local startup, lint, tests,
+and packaging regenerate it automatically so a fresh checkout works without
+committing a second copy of the rules.
 
 ## Updating the copy
 
 Replace `vendor/anti-slop/` in create-lumos-app with the selected upstream
 revision's `src/` files (excluding tests), and copy its `LICENSE`. Update the
-revision above, then run `pnpm build` to typecheck and regenerate this directory.
-Review the source and generated diff, then run `pnpm verify`.
+revision above, then run `pnpm build:rules` to typecheck and regenerate the plugin.
+Review the source diff, then run `pnpm verify`.
 
 Keep `oxlint` and `@oxlint/plugins` pinned to the same exact version in the root
 `package.json` and `src/packages.ts`. Generated apps own their copied plugin and

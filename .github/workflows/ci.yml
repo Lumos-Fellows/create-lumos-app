@@ -21,7 +21,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: git diff --exit-code -- templates/shared/tools/oxlint/anti-slop
+      - run: git diff --exit-code
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:unit

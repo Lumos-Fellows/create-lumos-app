@@ -13,3 +13,6 @@ test-*-e2e/
 /.env.*
 !/.env.example
 !/.env.*.example
+
+# Compiled anti-slop rules and copied metadata
+/templates/shared/tools/oxlint/anti-slop/

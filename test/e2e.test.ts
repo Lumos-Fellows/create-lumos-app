@@ -43,6 +43,11 @@ import { assertAgentGuidance } from "./helpers/agent-guidance.ts";
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
 
+// Windows cannot unlink an esbuild.exe hardlink held open by the tsx test runner.
+if (process.platform === "win32") {
+  process.env.npm_config_package_import_method = "copy";
+}
+
 // Expo's nested-repository Git prompt does not honor --yes; keep local runs headless.
 process.env.CI = "1";
 
