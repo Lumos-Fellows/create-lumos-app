@@ -39,6 +39,9 @@ import { projectDir } from "../src/utils.mjs";
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
 
+// Parallel framework tests must not race on Supabase's shared telemetry file.
+process.env.SUPABASE_TELEMETRY_DISABLED = "1";
+
 const SKIP_DIRS = new Set(["node_modules", ".next", ".expo", ".git"]);
 
 function walkFiles(dir) {
