@@ -13,6 +13,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { applyOverlay } from "../src/overlay.mjs";
 import antiSlop from "../templates/shared/tools/oxlint/anti-slop/index.mjs";
+import { assertAgentGuidance } from "./helpers/agent-guidance.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -47,7 +48,7 @@ describe("Anti-slop integration", () => {
   });
 
   for (const framework of ["nextjs", "expo"]) {
-    it(`${framework} templates pass every integration combination`, () => {
+    it(`${framework} templates pass lint and share valid agent guidance for every integration combination`, () => {
       const integrations = [
         framework === "nextjs" ? "shadcn" : "rnr",
         "supabase",
@@ -71,6 +72,7 @@ describe("Anti-slop integration", () => {
           const projectPath = mkdtempSync(join(ROOT, ".anti-slop-test-"));
           try {
             applyOverlay(projectPath, options);
+            assertAgentGuidance(projectPath, options.supabase);
             const result = lint(projectPath, ["."]);
             assert.equal(
               result.status,

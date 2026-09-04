@@ -272,7 +272,7 @@ describe("Generated Claude Stop hook", () => {
     "stop-checks.sh",
   );
 
-  it("runs the project's lint script and blocks when that script fails", () => {
+  it("delegates to verify and blocks when that script fails", () => {
     const projectPath = mkdtempSync(
       join(tmpdir(), "create-lumos-app-hook-lint-"),
     );
@@ -282,8 +282,8 @@ describe("Generated Claude Stop hook", () => {
         join(projectPath, "package.json"),
         JSON.stringify({
           scripts: {
-            format: 'node -e "process.exit(0)"',
-            lint: "node -e \"require('node:fs').writeFileSync('lint-ran', 'yes'); process.exit(1)\"",
+            verify:
+              "node -e \"require('node:fs').writeFileSync('verify-ran', 'yes'); process.exit(1)\"",
           },
         }),
       );
@@ -293,23 +293,26 @@ describe("Generated Claude Stop hook", () => {
       });
       assert.ifError(result.error);
       assert.equal(result.status, 2, result.stdout + result.stderr);
-      assert.ok(existsSync(join(projectPath, "lint-ran")));
-      assert.match(result.stderr, /lint FAILED/);
+      assert.ok(existsSync(join(projectPath, "verify-ran")));
+      assert.match(result.stderr, /verify/);
     } finally {
       rmSync(projectPath, { recursive: true, force: true });
     }
   });
 
-  it("is referenced by both framework settings files", () => {
-    for (const settingsPath of [
-      join(NEXTJS_DIR, "base", ".claude", "settings.json"),
-      join(EXPO_DIR, "base", ".claude", "settings.json"),
+  it("is referenced by the repo and shared template settings", () => {
+    for (const [settingsPath, command] of [
+      [
+        join(TEMPLATES, "..", ".claude", "settings.json"),
+        "sh templates/shared/.claude/hooks/stop-checks.sh",
+      ],
+      [
+        join(TEMPLATES, "shared", ".claude", "settings.json"),
+        "sh .claude/hooks/stop-checks.sh",
+      ],
     ]) {
       const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-      assert.equal(
-        settings.hooks.Stop[0].hooks[0].command,
-        "sh .claude/hooks/stop-checks.sh",
-      );
+      assert.equal(settings.hooks.Stop[0].hooks[0].command, command);
     }
   });
 
@@ -454,7 +457,7 @@ describe("Expo templates use kebab-case file names", () => {
     ".json",
   ]);
 
-  const allowedExceptions = new Set(["CLAUDE.md"]);
+  const allowedExceptions = new Set(["AGENTS.md", "CLAUDE.md"]);
 
   for (const file of walkFiles(EXPO_DIR)) {
     const relPath = file.slice(TEMPLATES.length + 1);
@@ -517,87 +520,6 @@ describe("Expo templates do not use deprecated SafeAreaView from react-native", 
 });
 
 // ── Expo: NativeWind styling convention ─────────────────────────────────────
-
-// ── CLAUDE.md rules structure ────────────────────────────────────────────────
-
-describe("Template CLAUDE.md has a Rules Index", () => {
-  const templateBases = [
-    {
-      name: "nextjs/base",
-      dir: join(NEXTJS_DIR, "base"),
-      integrationDir: NEXTJS_DIR,
-    },
-    {
-      name: "expo/base",
-      dir: join(EXPO_DIR, "base"),
-      integrationDir: EXPO_DIR,
-    },
-  ];
-
-  for (const { name, dir, integrationDir } of templateBases) {
-    const content = readFileSync(join(dir, "CLAUDE.md"), "utf-8");
-
-    it(`${name}/CLAUDE.md has a Rules Index section`, () => {
-      assert.ok(
-        content.includes("## Rules Index"),
-        `${name}/CLAUDE.md should have a "## Rules Index" section`,
-      );
-    });
-
-    it(`${name}/CLAUDE.md Rules Index has a maintenance note`, () => {
-      assert.ok(
-        content.includes("keep this index in sync"),
-        `${name}/CLAUDE.md should remind maintainers to keep the Rules Index in sync`,
-      );
-    });
-
-    it(`${name}/CLAUDE.md Rules Index links all exist`, () => {
-      // Strip SUPABASE-conditional block before checking — those files come from the integration dir
-      const unconditional = content.replace(
-        /\/\/ -- SUPABASE_START --[\s\S]*?\/\/ -- SUPABASE_END --/g,
-        "",
-      );
-      const linkPattern = /\[.*?\]\((.+?\.md)\)/g;
-      for (const [, link] of unconditional.matchAll(linkPattern)) {
-        assert.ok(
-          existsSync(join(dir, link)),
-          `${name}/CLAUDE.md references "${link}" which does not exist`,
-        );
-      }
-    });
-
-    it(`${name}/CLAUDE.md Rules Index is complete`, () => {
-      const rulesDir = join(dir, ".claude", "rules");
-      for (const file of readdirSync(rulesDir).filter((f) =>
-        f.endsWith(".md"),
-      )) {
-        assert.ok(
-          content.includes(file),
-          `${name}/CLAUDE.md Rules Index should reference ${file}`,
-        );
-      }
-    });
-
-    it(`${name}/CLAUDE.md supabase.md link is wrapped in SUPABASE markers`, () => {
-      const supabaseBlock = content.match(
-        /\/\/ -- SUPABASE_START --[\s\S]*?\/\/ -- SUPABASE_END --/,
-      );
-      assert.ok(
-        supabaseBlock?.[0].includes("supabase.md"),
-        `${name}/CLAUDE.md: supabase.md link should be wrapped in SUPABASE markers`,
-      );
-    });
-
-    it(`${name}: supabase integration includes .claude/rules/supabase.md`, () => {
-      assert.ok(
-        existsSync(
-          join(integrationDir, "supabase", ".claude", "rules", "supabase.md"),
-        ),
-        `supabase integration dir should include .claude/rules/supabase.md`,
-      );
-    });
-  }
-});
 
 describe("Expo templates do not use StyleSheet.create", () => {
   for (const file of walkFiles(EXPO_DIR).filter((f) => f.endsWith(".tsx"))) {

@@ -35,6 +35,7 @@ import { scaffold } from "../src/scaffold.mjs";
 import { installShadcn } from "../src/shadcn.mjs";
 import { initSupabase } from "../src/supabase.mjs";
 import { projectDir } from "../src/utils.mjs";
+import { assertAgentGuidance } from "./helpers/agent-guidance.mjs";
 
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
@@ -269,6 +270,21 @@ describe(
               applyOverlay(targetDir, options);
             });
 
+            it("shares complete agent guidance and Claude's import", () => {
+              assertAgentGuidance(targetDir, options.supabase);
+              assert.ok(existsSync(join(targetDir, "tools", "verify.mjs")));
+              const settings = JSON.parse(
+                readFileSync(
+                  join(targetDir, ".claude", "settings.json"),
+                  "utf-8",
+                ),
+              );
+              assert.equal(
+                settings.hooks.Stop[0].hooks[0].command,
+                "sh .claude/hooks/stop-checks.sh",
+              );
+            });
+
             it("has no residual conditional markers", () => {
               const files = walkFiles(targetDir);
               const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".md"];
@@ -323,6 +339,7 @@ describe(
                 readFileSync(join(targetDir, "package.json"), "utf-8"),
               );
               assert.equal(pkg.devDependencies.oxlint, OXLINT_VERSION);
+              assert.equal(pkg.scripts.verify, "node tools/verify.mjs");
               assert.equal(
                 pkg.devDependencies["@oxlint/plugins"],
                 OXLINT_VERSION,

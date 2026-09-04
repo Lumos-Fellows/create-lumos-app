@@ -14,10 +14,11 @@
   "scripts": {
     "start": "node bin/cli.js",
     "test": "node --test --test-force-exit test/e2e.test.mjs",
-    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/scaffold.test.mjs test/git.test.mjs test/packages.test.mjs test/format.test.mjs test/templates.test.mjs test/anti-slop.test.mjs",
-    "lint": "biome lint bin src test && oxlint bin src test",
+    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/scaffold.test.mjs test/git.test.mjs test/packages.test.mjs test/format.test.mjs test/templates.test.mjs test/anti-slop.test.mjs test/agent-guidance.test.mjs test/verification.test.mjs",
+    "lint": "biome check --error-on-warnings bin src test && oxlint bin src test",
     "format": "biome format --write bin src test biome.json package.json",
     "check": "biome check --write bin src test && oxlint bin src test",
+    "verify": "node templates/shared/tools/verify.mjs",
     "prerelease": "pnpm test:unit && pnpm lint",
     "changeset": "changeset",
     "release": "changeset publish"

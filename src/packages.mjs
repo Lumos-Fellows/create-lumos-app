@@ -175,6 +175,7 @@ export async function setupPackages(
     format: "biome format --write .",
     lint: "biome check --error-on-warnings . && oxlint .",
     typecheck: "tsc --noEmit",
+    verify: "node tools/verify.mjs",
   };
 
   // Enforce pnpm if selected

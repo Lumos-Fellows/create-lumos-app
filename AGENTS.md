@@ -1,17 +1,22 @@
 # create-lumos-app
 
-CLI scaffolding tool for Lumos Fellows. Wraps `create-next-app` and `create-expo-app`, then layers course-specific templates on top. Target users are students who need a zero-confusion setup experience.
+This CLI helps Lumos Fellows students start building with as little setup confusion as possible. Preserve that experience when changing defaults or generated projects.
+
+## Working agreements
+
+- Keep shared agent instructions here and in `.agents/rules/`. `CLAUDE.md` must contain only `@AGENTS.md`; `.claude/` holds Claude-specific configuration and hook wiring.
+- Use pnpm for work on this repo.
+- After changing `src/` or `templates/`, run `pnpm test:unit`, `pnpm lint`, and `pnpm test`. `pnpm verify` runs the complete verification sequence and is also used by Claude's Stop hook. CI must enforce checks independently of the harness.
+- Include a Changeset in every PR; use an empty Changeset for changes that intentionally do not need a release.
 
 ## Documentation
 
-Only add information to the repository README.md that cannot be inferred directly from the source code or configuration. Use it for project purpose, rationale, and external context; do not restate scripts, dependencies, file paths, or implementation details.
+Only add information to the repository README.md that cannot be inferred directly from the source code or configuration. Use it for project purpose, rationale, and external context; do not restate scripts, dependencies, file paths, or implementation details. Keep agent guidance focused on constraints, rationale, exceptions, and recurring mistakes.
 
 ## Rules Index
 
-Detailed instructions live in `.claude/rules/`. When adding, updating, or deleting a rules file, keep this index in sync.
+Before starting work, read each rules file whose scope applies to the task. `.agents/rules/` is an organizational convention; do not assume a harness automatically loads its files. When adding, updating, or deleting a rules file, keep this index in sync.
 
-- [architecture.md](.claude/rules/architecture.md) — Tech stack and key architectural decisions
-- [conventions.md](.claude/rules/conventions.md) — Conventions for generated projects (imports, styling, tooling)
-- [file-layout.md](.claude/rules/file-layout.md) — CLI source file responsibilities and templates layout
-- [testing.md](.claude/rules/testing.md) — Test commands and what the test suite covers
-- [workflows.md](.claude/rules/workflows.md) — Common tasks (add integration, modify templates, change prompt defaults)
+- Before changing CLI architecture or scaffolding, read [architecture.md](.agents/rules/architecture.md).
+- Before editing templates, integrations, or generated tooling, read [conventions.md](.agents/rules/conventions.md).
+- Before changing validation or preparing a PR, read [testing.md](.agents/rules/testing.md).

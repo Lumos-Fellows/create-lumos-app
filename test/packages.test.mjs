@@ -90,6 +90,7 @@ describe("setupPackages", () => {
           "biome check --error-on-warnings . && oxlint .",
         );
         assert.equal(pkg.scripts.dev, "next dev");
+        assert.equal(pkg.scripts.verify, "node tools/verify.mjs");
       } finally {
         rmSync(projectPath, { recursive: true, force: true });
       }

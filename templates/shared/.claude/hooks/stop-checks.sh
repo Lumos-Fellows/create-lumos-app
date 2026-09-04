@@ -1,13 +1,6 @@
 #!/bin/sh
 set -u
 
-FAILED=0
-OUTPUT=""
-
-has_script() {
-  node -e "process.exit(require('./package.json').scripts?.['$1'] ? 0 : 1)" 2>/dev/null
-}
-
 if [ -f pnpm-lock.yaml ]; then
   PM=pnpm
 elif [ -f package-lock.json ]; then
@@ -26,32 +19,7 @@ if [ ! -d node_modules ]; then
   exit 0
 fi
 
-run_script() {
-  "$PM" run "$1"
-}
-
-run_check() {
-  name="$1"
-  shift
-
-  if result=$("$@" 2>&1); then
-    echo "[ok] $name passed" >&2
-  else
-    FAILED=1
-    OUTPUT="$OUTPUT\n\n[fail] $name FAILED:\n$result"
-    echo "[fail] $name failed" >&2
-  fi
-}
-
-run_check "format" run_script format
-run_check "lint" run_script lint
-if has_script typecheck; then run_check "typecheck" env SKIP_ENV_VALIDATION=true "$PM" run typecheck; fi
-if has_script knip; then run_check "knip" "$PM" run knip; fi
-if has_script test; then run_check "test" env SKIP_ENV_VALIDATION=true "$PM" run test; fi
-
-if [ "$FAILED" -ne 0 ]; then
-  printf "\n=== ERRORS TO FIX ===\n" >&2
-  printf "%b\n" "$OUTPUT" >&2
+if ! "$PM" run verify >&2; then
   exit 2
 fi
 
