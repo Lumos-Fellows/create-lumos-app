@@ -222,9 +222,9 @@ export async function setupPackages(
     pkg.scripts.start = "expo start --dev-client";
     pkg.scripts.prebuild = "EXPO_NO_GIT_STATUS=1 expo prebuild --clean";
     pkg.scripts.android =
-      'if [ ! -d "android" ]; then echo "\\n  No android/ directory found. Run \\\"pnpm prebuild\\\" first to generate native projects.\\n" && exit 1; fi && expo run:android';
+      'if [ ! -d "android" ]; then echo "\\n  No android/ directory found. Run \\"pnpm prebuild\\" first to generate native projects.\\n" && exit 1; fi && expo run:android';
     pkg.scripts.ios =
-      'if [ ! -d "ios" ]; then echo "\\n  No ios/ directory found. Run \\\"pnpm prebuild\\\" first to generate native projects.\\n" && exit 1; fi && expo run:ios';
+      'if [ ! -d "ios" ]; then echo "\\n  No ios/ directory found. Run \\"pnpm prebuild\\" first to generate native projects.\\n" && exit 1; fi && expo run:ios';
     pkg.scripts["build:production"] =
       "eas build --output dist/ios-production.ipa --profile production --platform ios --local";
     pkg.scripts.submit =

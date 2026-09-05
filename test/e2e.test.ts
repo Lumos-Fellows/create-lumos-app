@@ -258,435 +258,331 @@ for (const c of cases) {
   frameworkGroups[fw].push(c);
 }
 
-describe(
-  "e2e scaffolding",
-  { concurrency: 1, timeout: CASE_TIMEOUT * cases.length },
-  () => {
-    for (const [framework, group] of Object.entries(frameworkGroups)) {
-      describe(framework, { concurrency: 1 }, () => {
-        for (const { label, options } of group) {
-          describe(label, { concurrency: 1, timeout: CASE_TIMEOUT }, () => {
-            const targetDir = projectDir(options.name);
+describe("e2e scaffolding", {
+  concurrency: 1,
+  timeout: CASE_TIMEOUT * cases.length,
+}, () => {
+  for (const [framework, group] of Object.entries(frameworkGroups)) {
+    describe(framework, { concurrency: 1 }, () => {
+      for (const { label, options } of group) {
+        describe(label, { concurrency: 1, timeout: CASE_TIMEOUT }, () => {
+          const targetDir = projectDir(options.name);
 
-            // clean slate before and after
-            function cleanup() {
-              if (existsSync(targetDir)) {
-                rmSync(targetDir, { recursive: true, force: true });
-              }
+          // clean slate before and after
+          function cleanup() {
+            if (existsSync(targetDir)) {
+              rmSync(targetDir, { recursive: true, force: true });
             }
-            cleanup();
-            after(cleanup);
+          }
+          cleanup();
+          after(cleanup);
 
-            it("scaffolds the project", async () => {
-              await scaffold(options);
-              assert.ok(
-                existsSync(targetDir),
-                "project directory should exist",
-              );
-              assert.ok(
-                existsSync(join(targetDir, "package.json")),
-                "package.json should exist",
-              );
-            });
+          it("scaffolds the project", async () => {
+            await scaffold(options);
+            assert.ok(existsSync(targetDir), "project directory should exist");
+            assert.ok(
+              existsSync(join(targetDir, "package.json")),
+              "package.json should exist",
+            );
+          });
 
-            it("applies template overlays", () => {
-              applyOverlay(targetDir, options);
-            });
+          it("applies template overlays", () => {
+            applyOverlay(targetDir, options);
+          });
 
-            it("shares complete agent guidance and Claude's import", () => {
-              assertAgentGuidance(targetDir, options.supabase);
-              assert.ok(existsSync(join(targetDir, "tools", "verify.ts")));
-              const settings = claudeSettingsSchema.parse(
-                JSON.parse(
-                  readFileSync(
-                    join(targetDir, ".claude", "settings.json"),
-                    "utf-8",
-                  ),
-                ),
-              );
-              assert.equal(
-                settings.hooks.Stop[0].hooks[0].command,
-                "sh .claude/hooks/stop-checks.sh",
-              );
-            });
-
-            it("has no residual conditional markers", () => {
-              const files = walkFiles(targetDir);
-              const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".md"];
-              const residual = [];
-              for (const file of files) {
-                if (!codeExts.some((ext) => file.endsWith(ext))) continue;
-                const content = readFileSync(file, "utf-8");
-                if (/--\s+[A-Z_]+_(START|END)\s+--/.test(content)) {
-                  residual.push(file.slice(targetDir.length + 1));
-                }
-              }
-              assert.deepStrictEqual(
-                residual,
-                [],
-                `Residual conditional markers found in:\n  ${residual.join("\n  ")}`,
-              );
-            });
-
-            it("does not include eslint config", () => {
-              assert.ok(
-                !existsSync(join(targetDir, "eslint.config.mjs")),
-                "eslint.config.mjs should not exist (we use Biome)",
-              );
-              assert.ok(
-                !existsSync(join(targetDir, ".eslintrc.json")),
-                ".eslintrc.json should not exist (we use Biome)",
-              );
-            });
-
-            it("uses non-deprecated Biome VS Code settings", () => {
-              const vscodePath = join(targetDir, ".vscode", "settings.json");
-              if (existsSync(vscodePath)) {
-                const content = readFileSync(vscodePath, "utf-8");
-                assert.ok(
-                  !content.includes("quickfix.biome"),
-                  "should not use deprecated quickfix.biome",
-                );
-                assert.ok(
-                  content.includes("source.fixAll.biome"),
-                  "should use source.fixAll.biome instead",
-                );
-              }
-            });
-
-            it("installs packages", async () => {
-              await setupPackages(targetDir, options);
-              assert.ok(
-                existsSync(join(targetDir, "node_modules")),
-                "node_modules should exist",
-              );
-              const pkg = packageJsonSchema.parse(
-                JSON.parse(
-                  readFileSync(join(targetDir, "package.json"), "utf-8"),
-                ),
-              );
-              assert.equal(pkg.devDependencies?.oxlint, OXLINT_VERSION);
-              assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
-              assert.equal(
-                pkg.devDependencies?.["@oxlint/plugins"],
-                OXLINT_VERSION,
-              );
-              assert.ok(existsSync(join(targetDir, ".oxlintrc.json")));
-              assert.ok(
-                existsSync(join(targetDir, "tools/oxlint/anti-slop/index.mjs")),
-              );
-            });
-
-            if (options.framework === "expo") {
-              it("resolves NativeWind's injected JSX runtime from the project", () => {
-                const requireFromProject = createRequire(
-                  join(targetDir, "package.json"),
-                );
-
-                assert.doesNotThrow(
-                  () =>
-                    requireFromProject.resolve(
-                      "react-native-css-interop/jsx-runtime",
-                    ),
-                  "NativeWind's JSX runtime must be a direct dependency for pnpm and Metro",
-                );
-              });
-            }
-
-            if (options.packageManager === "pnpm") {
-              it("has only pnpm-lock.yaml (no package-lock.json)", () => {
-                assert.ok(
-                  existsSync(join(targetDir, "pnpm-lock.yaml")),
-                  "pnpm-lock.yaml should exist",
-                );
-                assert.ok(
-                  !existsSync(join(targetDir, "package-lock.json")),
-                  "package-lock.json should not exist when using pnpm",
-                );
-              });
-            } else {
-              it("has only package-lock.json (no pnpm-lock.yaml)", () => {
-                assert.ok(
-                  existsSync(join(targetDir, "package-lock.json")),
-                  "package-lock.json should exist",
-                );
-                assert.ok(
-                  !existsSync(join(targetDir, "pnpm-lock.yaml")),
-                  "pnpm-lock.yaml should not exist when using npm",
-                );
-              });
-            }
-
-            it("ignores local-only generated project files", () => {
-              assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options);
-            });
-
-            it("includes local-only files in Claude worktrees", () => {
-              assertGeneratedWorktreeIncludeCopiesLocalFiles(targetDir);
-            });
-
-            if (options.supabase && options.packageManager === "pnpm") {
-              it("allows supabase postinstall in pnpm config", () => {
-                const workspace = readFileSync(
-                  join(targetDir, "pnpm-workspace.yaml"),
+          it("shares complete agent guidance and Claude's import", () => {
+            assertAgentGuidance(targetDir, options.supabase);
+            assert.ok(existsSync(join(targetDir, "tools", "verify.ts")));
+            const settings = claudeSettingsSchema.parse(
+              JSON.parse(
+                readFileSync(
+                  join(targetDir, ".claude", "settings.json"),
                   "utf-8",
-                );
-                assert.ok(
-                  /allowBuilds:\n(?: {2}.+\n)* {2}supabase: true\n/.test(
-                    workspace,
-                  ),
-                  "pnpm-workspace.yaml should have allowBuilds.supabase set to true",
-                );
-              });
+                ),
+              ),
+            );
+            assert.equal(
+              settings.hooks.Stop[0].hooks[0].command,
+              "sh .claude/hooks/stop-checks.sh",
+            );
+          });
+
+          it("has no residual conditional markers", () => {
+            const files = walkFiles(targetDir);
+            const codeExts = [".ts", ".tsx", ".js", ".jsx", ".css", ".md"];
+            const residual = [];
+            for (const file of files) {
+              if (!codeExts.some((ext) => file.endsWith(ext))) continue;
+              const content = readFileSync(file, "utf-8");
+              if (/--\s+[A-Z_]+_(START|END)\s+--/.test(content)) {
+                residual.push(file.slice(targetDir.length + 1));
+              }
             }
+            assert.deepStrictEqual(
+              residual,
+              [],
+              `Residual conditional markers found in:\n  ${residual.join("\n  ")}`,
+            );
+          });
 
-            if (options.supabase) {
-              it("has supabase CLI available", () => {
-                const result = execFileSync("npx", ["supabase", "--version"], {
-                  cwd: targetDir,
-                  encoding: "utf-8",
-                  stdio: "pipe",
-                  shell: process.platform === "win32",
-                }).trim();
-                assert.ok(
-                  /^\d+\.\d+\.\d+/.test(result),
-                  `supabase --version should return a semver version, got: ${result}`,
-                );
-              });
+          it("does not include eslint config", () => {
+            assert.ok(
+              !existsSync(join(targetDir, "eslint.config.mjs")),
+              "eslint.config.mjs should not exist (we use Biome)",
+            );
+            assert.ok(
+              !existsSync(join(targetDir, ".eslintrc.json")),
+              ".eslintrc.json should not exist (we use Biome)",
+            );
+          });
 
-              it("initializes Supabase project", async () => {
-                await initSupabase(targetDir);
-                assert.ok(
-                  existsSync(join(targetDir, "supabase", "config.toml")),
-                  "supabase/config.toml should exist after supabase init",
-                );
-              });
-
-              it("ignores Supabase temp files", () => {
-                const gitignore = readFileSync(
-                  join(targetDir, "supabase", ".gitignore"),
-                  "utf-8",
-                );
-                assert.match(gitignore, /(^|\n)\.temp(?:\/)?(\n|$)/);
-              });
-            }
-
-            if (!options.supabase) {
-              it("does not include supabase directory", () => {
-                assert.ok(
-                  !existsSync(join(targetDir, "supabase", "config.toml")),
-                  "supabase/config.toml should not exist when supabase is disabled",
-                );
-              });
-            }
-
-            if (options.shadcn) {
-              it("installs shadcn/ui components", async () => {
-                await installShadcn(targetDir);
-                assert.ok(
-                  existsSync(join(targetDir, "components.json")),
-                  "components.json should exist when shadcn is enabled",
-                );
-                assert.ok(
-                  existsSync(
-                    join(targetDir, "src", "components", "ui", "button.tsx"),
-                  ),
-                  "button.tsx should exist when shadcn is enabled",
-                );
-              });
-            }
-
-            if (options.rnr) {
-              it("installs React Native Reusables components", async () => {
-                await installRnr(targetDir);
-                assert.ok(
-                  existsSync(join(targetDir, "components.json")),
-                  "components.json should exist when RNR is enabled",
-                );
-                assert.ok(
-                  existsSync(join(targetDir, "components", "ui", "button.tsx")),
-                  "button.tsx should exist when RNR is enabled",
-                );
-              });
-            }
-
-            if (options.framework === "nextjs" && !options.shadcn) {
-              it("does not include shadcn artifacts", () => {
-                assert.ok(
-                  !existsSync(join(targetDir, "components.json")),
-                  "components.json should not exist when shadcn is disabled",
-                );
-                assert.ok(
-                  !existsSync(
-                    join(targetDir, "src", "components", "ui", "button.tsx"),
-                  ),
-                  "button.tsx should not exist when shadcn is disabled",
-                );
-              });
-            }
-
-            if (options.template === "notes-app") {
-              it("includes notes-app template files", () => {
-                assert.ok(
-                  existsSync(
-                    join(targetDir, "src", "components", "navbar.tsx"),
-                  ),
-                  "navbar.tsx should exist for notes-app template",
-                );
-                assert.ok(
-                  existsSync(
-                    join(targetDir, "src", "app", "notes", "page.tsx"),
-                  ),
-                  "notes/page.tsx should exist for notes-app template",
-                );
-              });
-            }
-
-            it("creates .env.local instead of .env.example", () => {
+          it("uses non-deprecated Biome VS Code settings", () => {
+            const vscodePath = join(targetDir, ".vscode", "settings.json");
+            if (existsSync(vscodePath)) {
+              const content = readFileSync(vscodePath, "utf-8");
               assert.ok(
-                existsSync(join(targetDir, ".env.local")),
-                ".env.local should exist",
+                !content.includes("quickfix.biome"),
+                "should not use deprecated quickfix.biome",
               );
               assert.ok(
-                !existsSync(join(targetDir, ".env.example")),
-                ".env.example should not exist",
+                content.includes("source.fixAll.biome"),
+                "should use source.fixAll.biome instead",
+              );
+            }
+          });
+
+          it("installs packages", async () => {
+            await setupPackages(targetDir, options);
+            assert.ok(
+              existsSync(join(targetDir, "node_modules")),
+              "node_modules should exist",
+            );
+            const pkg = packageJsonSchema.parse(
+              JSON.parse(
+                readFileSync(join(targetDir, "package.json"), "utf-8"),
+              ),
+            );
+            assert.equal(pkg.devDependencies?.oxlint, OXLINT_VERSION);
+            assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
+            assert.equal(
+              pkg.devDependencies?.["@oxlint/plugins"],
+              OXLINT_VERSION,
+            );
+            assert.ok(existsSync(join(targetDir, ".oxlintrc.json")));
+            assert.ok(
+              existsSync(join(targetDir, "tools/oxlint/anti-slop/index.mjs")),
+            );
+          });
+
+          if (options.framework === "expo") {
+            it("resolves NativeWind's injected JSX runtime from the project", () => {
+              const requireFromProject = createRequire(
+                join(targetDir, "package.json"),
+              );
+
+              assert.doesNotThrow(
+                () =>
+                  requireFromProject.resolve(
+                    "react-native-css-interop/jsx-runtime",
+                  ),
+                "NativeWind's JSX runtime must be a direct dependency for pnpm and Metro",
               );
             });
+          }
 
-            it("generates README", () => {
-              generateReadme(targetDir, options);
+          if (options.packageManager === "pnpm") {
+            it("has only pnpm-lock.yaml (no package-lock.json)", () => {
               assert.ok(
-                existsSync(join(targetDir, "README.md")),
-                "README.md should exist",
+                existsSync(join(targetDir, "pnpm-lock.yaml")),
+                "pnpm-lock.yaml should exist",
               );
-              const readme = readFileSync(
-                join(targetDir, "README.md"),
+              assert.ok(
+                !existsSync(join(targetDir, "package-lock.json")),
+                "package-lock.json should not exist when using pnpm",
+              );
+            });
+          } else {
+            it("has only package-lock.json (no pnpm-lock.yaml)", () => {
+              assert.ok(
+                existsSync(join(targetDir, "package-lock.json")),
+                "package-lock.json should exist",
+              );
+              assert.ok(
+                !existsSync(join(targetDir, "pnpm-lock.yaml")),
+                "pnpm-lock.yaml should not exist when using npm",
+              );
+            });
+          }
+
+          it("ignores local-only generated project files", () => {
+            assertGeneratedGitIgnoreProtectsLocalFiles(targetDir, options);
+          });
+
+          it("includes local-only files in Claude worktrees", () => {
+            assertGeneratedWorktreeIncludeCopiesLocalFiles(targetDir);
+          });
+
+          if (options.supabase && options.packageManager === "pnpm") {
+            it("allows supabase postinstall in pnpm config", () => {
+              const workspace = readFileSync(
+                join(targetDir, "pnpm-workspace.yaml"),
                 "utf-8",
               );
               assert.ok(
-                !readme.includes("cp .env.example"),
-                "README should not reference .env.example",
+                /allowBuilds:\n(?: {2}.+\n)* {2}supabase: true\n/.test(
+                  workspace,
+                ),
+                "pnpm-workspace.yaml should have allowBuilds.supabase set to true",
+              );
+            });
+          }
+
+          if (options.supabase) {
+            it("has supabase CLI available", () => {
+              const result = execFileSync("npx", ["supabase", "--version"], {
+                cwd: targetDir,
+                encoding: "utf-8",
+                stdio: "pipe",
+                shell: process.platform === "win32",
+              }).trim();
+              assert.ok(
+                /^\d+\.\d+\.\d+/.test(result),
+                `supabase --version should return a semver version, got: ${result}`,
               );
             });
 
-            if (options.framework === "expo") {
-              it("bundles the generated app with Metro", () => {
-                const expoBin = join(targetDir, "node_modules", ".bin", "expo");
-                const exportDir = mkdtempSync(
-                  join(tmpdir(), "create-lumos-app-expo-export-"),
-                );
-
-                try {
-                  execFileSync(
-                    expoBin,
-                    ["export", "--platform", "web", "--output-dir", exportDir],
-                    {
-                      cwd: targetDir,
-                      env: {
-                        ...process.env,
-                        EXPO_NO_TELEMETRY: "1",
-                        // The bundle test needs valid local configuration, not a live backend.
-                        EXPO_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-                        EXPO_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
-                      },
-                      stdio: "pipe",
-                      shell: process.platform === "win32",
-                    },
-                  );
-                } catch (err) {
-                  const output = [
-                    err instanceof Error && "stdout" in err
-                      ? String(err.stdout)
-                      : "",
-                    err instanceof Error && "stderr" in err
-                      ? String(err.stderr)
-                      : "",
-                  ]
-                    .filter(Boolean)
-                    .join("\n");
-                  assert.fail(`Expo Metro bundle failed:\n${output}`);
-                } finally {
-                  rmSync(exportDir, { recursive: true, force: true });
-                }
-              });
-            }
-
-            it("formats generated files", async () => {
-              await formatProject(targetDir, options);
+            it("initializes Supabase project", async () => {
+              await initSupabase(targetDir);
+              assert.ok(
+                existsSync(join(targetDir, "supabase", "config.toml")),
+                "supabase/config.toml should exist after supabase init",
+              );
             });
 
-            if (
-              options.framework === "nextjs" &&
-              options.template === "notes-app"
-            ) {
-              it("creates a clean final Git commit with generated notes-app files", async () => {
-                const gitProjectPath =
-                  copyGeneratedAppForGitAssertion(targetDir);
-                try {
-                  const initialized = await initializeGitRepository(
-                    gitProjectPath,
-                    { runner: runGitWithTestIdentity },
-                  );
-
-                  assert.equal(
-                    initialized,
-                    GIT_INITIALIZATION_STATUS.COMMITTED,
-                  );
-                  assert.equal(
-                    execFileSync("git", ["status", "--short"], {
-                      cwd: gitProjectPath,
-                      encoding: "utf-8",
-                    }),
-                    "",
-                  );
-
-                  const head = execFileSync(
-                    "git",
-                    ["show", "--name-only", "--oneline", "HEAD"],
-                    {
-                      cwd: gitProjectPath,
-                      encoding: "utf-8",
-                    },
-                  );
-                  assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
-                  assert.ok(head.includes("src/app/notes/page.tsx"));
-                  assert.ok(head.includes("src/components/navbar.tsx"));
-                  assert.ok(
-                    !head.includes("Initial commit from Create Next App"),
-                  );
-                  assert.ok(!head.includes(".env.local"));
-                  assert.ok(!head.includes("node_modules"));
-                  assert.ok(!head.includes(".next"));
-                  assert.ok(!head.includes("supabase/.temp"));
-                } finally {
-                  rmSync(gitProjectPath, { recursive: true, force: true });
-                }
-              });
-            }
-
-            it("passes TypeScript type check", () => {
-              try {
-                execFileSync(options.packageManager, ["run", "typecheck"], {
-                  cwd: targetDir,
-                  stdio: "pipe",
-                  shell: process.platform === "win32",
-                });
-              } catch (err) {
-                assert.fail(
-                  `Generated typecheck script failed:\n${(err instanceof Error && "stdout" in err ? String(err.stdout) : "") || (err instanceof Error && "stderr" in err ? String(err.stderr) : "")}`,
-                );
-              }
+            it("ignores Supabase temp files", () => {
+              const gitignore = readFileSync(
+                join(targetDir, "supabase", ".gitignore"),
+                "utf-8",
+              );
+              assert.match(gitignore, /(^|\n)\.temp(?:\/)?(\n|$)/);
             });
+          }
 
-            it("passes the generated Biome and anti-slop lint script", () => {
-              // Isolate Oxlint from the parent repo's test-*-e2e gitignore entry.
-              execFileSync("git", ["init", "--quiet"], { cwd: targetDir });
+          if (!options.supabase) {
+            it("does not include supabase directory", () => {
+              assert.ok(
+                !existsSync(join(targetDir, "supabase", "config.toml")),
+                "supabase/config.toml should not exist when supabase is disabled",
+              );
+            });
+          }
+
+          if (options.shadcn) {
+            it("installs shadcn/ui components", async () => {
+              await installShadcn(targetDir);
+              assert.ok(
+                existsSync(join(targetDir, "components.json")),
+                "components.json should exist when shadcn is enabled",
+              );
+              assert.ok(
+                existsSync(
+                  join(targetDir, "src", "components", "ui", "button.tsx"),
+                ),
+                "button.tsx should exist when shadcn is enabled",
+              );
+            });
+          }
+
+          if (options.rnr) {
+            it("installs React Native Reusables components", async () => {
+              await installRnr(targetDir);
+              assert.ok(
+                existsSync(join(targetDir, "components.json")),
+                "components.json should exist when RNR is enabled",
+              );
+              assert.ok(
+                existsSync(join(targetDir, "components", "ui", "button.tsx")),
+                "button.tsx should exist when RNR is enabled",
+              );
+            });
+          }
+
+          if (options.framework === "nextjs" && !options.shadcn) {
+            it("does not include shadcn artifacts", () => {
+              assert.ok(
+                !existsSync(join(targetDir, "components.json")),
+                "components.json should not exist when shadcn is disabled",
+              );
+              assert.ok(
+                !existsSync(
+                  join(targetDir, "src", "components", "ui", "button.tsx"),
+                ),
+                "button.tsx should not exist when shadcn is disabled",
+              );
+            });
+          }
+
+          if (options.template === "notes-app") {
+            it("includes notes-app template files", () => {
+              assert.ok(
+                existsSync(join(targetDir, "src", "components", "navbar.tsx")),
+                "navbar.tsx should exist for notes-app template",
+              );
+              assert.ok(
+                existsSync(join(targetDir, "src", "app", "notes", "page.tsx")),
+                "notes/page.tsx should exist for notes-app template",
+              );
+            });
+          }
+
+          it("creates .env.local instead of .env.example", () => {
+            assert.ok(
+              existsSync(join(targetDir, ".env.local")),
+              ".env.local should exist",
+            );
+            assert.ok(
+              !existsSync(join(targetDir, ".env.example")),
+              ".env.example should not exist",
+            );
+          });
+
+          it("generates README", () => {
+            generateReadme(targetDir, options);
+            assert.ok(
+              existsSync(join(targetDir, "README.md")),
+              "README.md should exist",
+            );
+            const readme = readFileSync(join(targetDir, "README.md"), "utf-8");
+            assert.ok(
+              !readme.includes("cp .env.example"),
+              "README should not reference .env.example",
+            );
+          });
+
+          if (options.framework === "expo") {
+            it("bundles the generated app with Metro", () => {
+              const expoBin = join(targetDir, "node_modules", ".bin", "expo");
+              const exportDir = mkdtempSync(
+                join(tmpdir(), "create-lumos-app-expo-export-"),
+              );
+
               try {
-                execFileSync(options.packageManager, ["run", "lint"], {
-                  cwd: targetDir,
-                  stdio: "pipe",
-                  shell: process.platform === "win32",
-                });
+                execFileSync(
+                  expoBin,
+                  ["export", "--platform", "web", "--output-dir", exportDir],
+                  {
+                    cwd: targetDir,
+                    env: {
+                      ...process.env,
+                      EXPO_NO_TELEMETRY: "1",
+                      // The bundle test needs valid local configuration, not a live backend.
+                      EXPO_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+                      EXPO_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+                    },
+                    stdio: "pipe",
+                    shell: process.platform === "win32",
+                  },
+                );
               } catch (err) {
                 const output = [
                   err instanceof Error && "stdout" in err
@@ -698,12 +594,101 @@ describe(
                 ]
                   .filter(Boolean)
                   .join("\n");
-                assert.fail(`lint failed:\n${output}`);
+                assert.fail(`Expo Metro bundle failed:\n${output}`);
+              } finally {
+                rmSync(exportDir, { recursive: true, force: true });
               }
             });
+          }
+
+          it("formats generated files", async () => {
+            await formatProject(targetDir, options);
           });
-        }
-      });
-    }
-  },
-);
+
+          if (
+            options.framework === "nextjs" &&
+            options.template === "notes-app"
+          ) {
+            it("creates a clean final Git commit with generated notes-app files", async () => {
+              const gitProjectPath = copyGeneratedAppForGitAssertion(targetDir);
+              try {
+                const initialized = await initializeGitRepository(
+                  gitProjectPath,
+                  { runner: runGitWithTestIdentity },
+                );
+
+                assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+                assert.equal(
+                  execFileSync("git", ["status", "--short"], {
+                    cwd: gitProjectPath,
+                    encoding: "utf-8",
+                  }),
+                  "",
+                );
+
+                const head = execFileSync(
+                  "git",
+                  ["show", "--name-only", "--oneline", "HEAD"],
+                  {
+                    cwd: gitProjectPath,
+                    encoding: "utf-8",
+                  },
+                );
+                assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
+                assert.ok(head.includes("src/app/notes/page.tsx"));
+                assert.ok(head.includes("src/components/navbar.tsx"));
+                assert.ok(
+                  !head.includes("Initial commit from Create Next App"),
+                );
+                assert.ok(!head.includes(".env.local"));
+                assert.ok(!head.includes("node_modules"));
+                assert.ok(!head.includes(".next"));
+                assert.ok(!head.includes("supabase/.temp"));
+              } finally {
+                rmSync(gitProjectPath, { recursive: true, force: true });
+              }
+            });
+          }
+
+          it("passes TypeScript type check", () => {
+            try {
+              execFileSync(options.packageManager, ["run", "typecheck"], {
+                cwd: targetDir,
+                stdio: "pipe",
+                shell: process.platform === "win32",
+              });
+            } catch (err) {
+              assert.fail(
+                `Generated typecheck script failed:\n${(err instanceof Error && "stdout" in err ? String(err.stdout) : "") || (err instanceof Error && "stderr" in err ? String(err.stderr) : "")}`,
+              );
+            }
+          });
+
+          it("passes the generated Biome and anti-slop lint script", () => {
+            // Isolate Oxlint from the parent repo's test-*-e2e gitignore entry.
+            execFileSync("git", ["init", "--quiet"], { cwd: targetDir });
+            try {
+              execFileSync(options.packageManager, ["run", "lint"], {
+                cwd: targetDir,
+                stdio: "pipe",
+                shell: process.platform === "win32",
+              });
+            } catch (err) {
+              const output = [
+                err instanceof Error && "stdout" in err
+                  ? String(err.stdout)
+                  : "",
+                err instanceof Error && "stderr" in err
+                  ? String(err.stderr)
+                  : "",
+              ]
+                .filter(Boolean)
+                .join("\n");
+              assert.fail(`lint failed:\n${output}`);
+            }
+          });
+        });
+      }
+    });
+  }
+});

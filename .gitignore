@@ -16,3 +16,6 @@ test-*-e2e/
 
 # Compiled anti-slop rules and copied metadata
 /templates/shared/tools/oxlint/anti-slop/
+
+# Locally generated projects from the development dashboard
+/.playground/

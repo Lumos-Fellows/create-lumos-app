@@ -211,57 +211,55 @@ describe("Shared Claude worktree include copies local generated-project config",
     );
   });
 
-  it(
-    "only asks Claude to copy files ignored by generated gitignore",
-    { skip: !hasGit() },
-    () => {
-      const projectPath = mkdtempSync(
-        join(tmpdir(), "create-lumos-app-worktreeinclude-"),
+  it("only asks Claude to copy files ignored by generated gitignore", {
+    skip: !hasGit(),
+  }, () => {
+    const projectPath = mkdtempSync(
+      join(tmpdir(), "create-lumos-app-worktreeinclude-"),
+    );
+
+    try {
+      cpSync(
+        join(TEMPLATES, "shared", ".gitignore"),
+        join(projectPath, ".gitignore"),
+      );
+      cpSync(worktreeincludePath, join(projectPath, ".worktreeinclude"));
+      mkdirSync(join(projectPath, ".claude", "worktrees", "state"), {
+        recursive: true,
+      });
+      writeFileSync(join(projectPath, ".env"), "ROOT_ENV=1\n");
+      writeFileSync(join(projectPath, ".env.local"), "LOCAL_ENV=1\n");
+      writeFileSync(join(projectPath, ".env.example"), "EXAMPLE_ENV=1\n");
+      writeFileSync(
+        join(projectPath, ".claude", "settings.local.json"),
+        "{}\n",
       );
 
-      try {
-        cpSync(
-          join(TEMPLATES, "shared", ".gitignore"),
-          join(projectPath, ".gitignore"),
-        );
-        cpSync(worktreeincludePath, join(projectPath, ".worktreeinclude"));
-        mkdirSync(join(projectPath, ".claude", "worktrees", "state"), {
-          recursive: true,
-        });
-        writeFileSync(join(projectPath, ".env"), "ROOT_ENV=1\n");
-        writeFileSync(join(projectPath, ".env.local"), "LOCAL_ENV=1\n");
-        writeFileSync(join(projectPath, ".env.example"), "EXAMPLE_ENV=1\n");
-        writeFileSync(
-          join(projectPath, ".claude", "settings.local.json"),
-          "{}\n",
-        );
+      execFileSync("git", ["init", "--initial-branch=main"], {
+        cwd: projectPath,
+        stdio: "ignore",
+      });
 
-        execFileSync("git", ["init", "--initial-branch=main"], {
+      for (const path of [
+        ".env",
+        ".env.local",
+        ".claude/settings.local.json",
+        ".claude/worktrees/state",
+      ]) {
+        execFileSync("git", ["check-ignore", "-q", path], {
           cwd: projectPath,
-          stdio: "ignore",
         });
-
-        for (const path of [
-          ".env",
-          ".env.local",
-          ".claude/settings.local.json",
-          ".claude/worktrees/state",
-        ]) {
-          execFileSync("git", ["check-ignore", "-q", path], {
-            cwd: projectPath,
-          });
-        }
-
-        assert.throws(() =>
-          execFileSync("git", ["check-ignore", "-q", ".env.example"], {
-            cwd: projectPath,
-          }),
-        );
-      } finally {
-        rmSync(projectPath, { recursive: true, force: true });
       }
-    },
-  );
+
+      assert.throws(() =>
+        execFileSync("git", ["check-ignore", "-q", ".env.example"], {
+          cwd: projectPath,
+        }),
+      );
+    } finally {
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("Generated Claude Stop hook", () => {

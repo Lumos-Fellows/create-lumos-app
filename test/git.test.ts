@@ -155,218 +155,212 @@ describe("initializeGitRepository", () => {
     );
   });
 
-  it(
-    "creates a clean initial commit with generated app files",
-    { skip: !hasGit() },
-    async () => {
-      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
-      try {
-        mkdirSync(join(projectPath, "src", "app", "notes"), {
-          recursive: true,
-        });
-        mkdirSync(join(projectPath, "node_modules"), { recursive: true });
-        mkdirSync(join(projectPath, ".next"), { recursive: true });
-        mkdirSync(join(projectPath, "supabase", ".temp"), {
-          recursive: true,
-        });
+  it("creates a clean initial commit with generated app files", {
+    skip: !hasGit(),
+  }, async () => {
+    const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
+    try {
+      mkdirSync(join(projectPath, "src", "app", "notes"), {
+        recursive: true,
+      });
+      mkdirSync(join(projectPath, "node_modules"), { recursive: true });
+      mkdirSync(join(projectPath, ".next"), { recursive: true });
+      mkdirSync(join(projectPath, "supabase", ".temp"), {
+        recursive: true,
+      });
 
-        writeFileSync(
-          join(projectPath, ".gitignore"),
-          "node_modules\n.next\n.env*.local\nsupabase/.temp\n",
-        );
-        writeFileSync(join(projectPath, ".env.local"), "LOCAL_ONLY=1\n");
-        writeFileSync(
-          join(projectPath, "src", "app", "notes", "page.tsx"),
-          "export default function NotesPage() { return null; }\n",
-        );
-        writeFileSync(join(projectPath, "README.md"), "# Test app\n");
-        writeFileSync(
-          join(projectPath, "node_modules", "ignored.js"),
-          "ignored\n",
-        );
-        writeFileSync(join(projectPath, ".next", "ignored"), "ignored\n");
-        writeFileSync(
-          join(projectPath, "supabase", ".temp", "ignored"),
-          "ignored\n",
-        );
+      writeFileSync(
+        join(projectPath, ".gitignore"),
+        "node_modules\n.next\n.env*.local\nsupabase/.temp\n",
+      );
+      writeFileSync(join(projectPath, ".env.local"), "LOCAL_ONLY=1\n");
+      writeFileSync(
+        join(projectPath, "src", "app", "notes", "page.tsx"),
+        "export default function NotesPage() { return null; }\n",
+      );
+      writeFileSync(join(projectPath, "README.md"), "# Test app\n");
+      writeFileSync(
+        join(projectPath, "node_modules", "ignored.js"),
+        "ignored\n",
+      );
+      writeFileSync(join(projectPath, ".next", "ignored"), "ignored\n");
+      writeFileSync(
+        join(projectPath, "supabase", ".temp", "ignored"),
+        "ignored\n",
+      );
 
-        const initialized = await initializeGitRepository(projectPath, {
-          runner: (cmd, args, opts) =>
-            execFileSync(cmd, args, {
-              ...opts,
-              encoding: "utf-8",
-              stdio: "pipe",
-              env: {
-                ...process.env,
-                GIT_AUTHOR_NAME: "create-lumos-app tests",
-                GIT_AUTHOR_EMAIL: "tests@example.com",
-                GIT_COMMITTER_NAME: "create-lumos-app tests",
-                GIT_COMMITTER_EMAIL: "tests@example.com",
-              },
-            }),
-        });
-
-        assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
-        assert.equal(
-          execFileSync("git", ["status", "--short"], {
-            cwd: projectPath,
+      const initialized = await initializeGitRepository(projectPath, {
+        runner: (cmd, args, opts) =>
+          execFileSync(cmd, args, {
+            ...opts,
             encoding: "utf-8",
-          }),
-          "",
-        );
-        const head = execFileSync(
-          "git",
-          ["show", "--name-only", "--oneline", "HEAD"],
-          {
-            cwd: projectPath,
-            encoding: "utf-8",
-          },
-        );
-        assert.ok(head.includes("src/app/notes/page.tsx"));
-        assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
-        assert.ok(!head.includes("Initial commit from Create Next App"));
-        assert.ok(!head.includes(".env.local"));
-        assert.ok(!head.includes("node_modules"));
-        assert.ok(!head.includes(".next"));
-        assert.ok(!head.includes("supabase/.temp"));
-      } finally {
-        rmSync(projectPath, { recursive: true, force: true });
-      }
-    },
-  );
-
-  it(
-    "creates the initial commit on main when Git has no configured default branch",
-    { skip: !hasGit() },
-    async () => {
-      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
-      const worktreePath = `${projectPath}-worktree-from-main`;
-      const globalConfigPath = join(projectPath, "empty-gitconfig");
-
-      try {
-        writeFileSync(globalConfigPath, "");
-        writeFileSync(join(projectPath, ".gitignore"), "\n");
-        writeFileSync(join(projectPath, "README.md"), "# Test app\n");
-
-        const initialized = await initializeGitRepository(projectPath, {
-          runner: (cmd, args, opts) =>
-            execFileSync(cmd, args, {
-              ...opts,
-              encoding: "utf-8",
-              stdio: "pipe",
-              env: {
-                ...process.env,
-                GIT_CONFIG_GLOBAL: globalConfigPath,
-                GIT_CONFIG_NOSYSTEM: "1",
-                GIT_AUTHOR_NAME: "create-lumos-app tests",
-                GIT_AUTHOR_EMAIL: "tests@example.com",
-                GIT_COMMITTER_NAME: "create-lumos-app tests",
-                GIT_COMMITTER_EMAIL: "tests@example.com",
-              },
-            }),
-        });
-
-        assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
-        assert.equal(
-          execFileSync("git", ["branch", "--show-current"], {
-            cwd: projectPath,
-            encoding: "utf-8",
+            stdio: "pipe",
             env: {
               ...process.env,
-              GIT_CONFIG_GLOBAL: globalConfigPath,
-              GIT_CONFIG_NOSYSTEM: "1",
+              GIT_AUTHOR_NAME: "create-lumos-app tests",
+              GIT_AUTHOR_EMAIL: "tests@example.com",
+              GIT_COMMITTER_NAME: "create-lumos-app tests",
+              GIT_COMMITTER_EMAIL: "tests@example.com",
             },
-          }).trim(),
-          "main",
-        );
+          }),
+      });
 
-        execFileSync(
-          "git",
-          ["worktree", "add", "-b", "test-worktree", worktreePath, "main"],
-          {
-            cwd: projectPath,
+      assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+      assert.equal(
+        execFileSync("git", ["status", "--short"], {
+          cwd: projectPath,
+          encoding: "utf-8",
+        }),
+        "",
+      );
+      const head = execFileSync(
+        "git",
+        ["show", "--name-only", "--oneline", "HEAD"],
+        {
+          cwd: projectPath,
+          encoding: "utf-8",
+        },
+      );
+      assert.ok(head.includes("src/app/notes/page.tsx"));
+      assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
+      assert.ok(!head.includes("Initial commit from Create Next App"));
+      assert.ok(!head.includes(".env.local"));
+      assert.ok(!head.includes("node_modules"));
+      assert.ok(!head.includes(".next"));
+      assert.ok(!head.includes("supabase/.temp"));
+    } finally {
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
+
+  it("creates the initial commit on main when Git has no configured default branch", {
+    skip: !hasGit(),
+  }, async () => {
+    const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
+    const worktreePath = `${projectPath}-worktree-from-main`;
+    const globalConfigPath = join(projectPath, "empty-gitconfig");
+
+    try {
+      writeFileSync(globalConfigPath, "");
+      writeFileSync(join(projectPath, ".gitignore"), "\n");
+      writeFileSync(join(projectPath, "README.md"), "# Test app\n");
+
+      const initialized = await initializeGitRepository(projectPath, {
+        runner: (cmd, args, opts) =>
+          execFileSync(cmd, args, {
+            ...opts,
             encoding: "utf-8",
             stdio: "pipe",
             env: {
               ...process.env,
               GIT_CONFIG_GLOBAL: globalConfigPath,
               GIT_CONFIG_NOSYSTEM: "1",
+              GIT_AUTHOR_NAME: "create-lumos-app tests",
+              GIT_AUTHOR_EMAIL: "tests@example.com",
+              GIT_COMMITTER_NAME: "create-lumos-app tests",
+              GIT_COMMITTER_EMAIL: "tests@example.com",
             },
+          }),
+      });
+
+      assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+      assert.equal(
+        execFileSync("git", ["branch", "--show-current"], {
+          cwd: projectPath,
+          encoding: "utf-8",
+          env: {
+            ...process.env,
+            GIT_CONFIG_GLOBAL: globalConfigPath,
+            GIT_CONFIG_NOSYSTEM: "1",
           },
-        );
-        assert.equal(
-          realpathSync(
-            execFileSync("git", ["rev-parse", "--show-toplevel"], {
-              cwd: worktreePath,
-              encoding: "utf-8",
-              env: {
-                ...process.env,
-                GIT_CONFIG_GLOBAL: globalConfigPath,
-                GIT_CONFIG_NOSYSTEM: "1",
-              },
-            }).trim(),
-          ),
-          realpathSync(worktreePath),
-        );
-      } finally {
-        rmSync(worktreePath, { recursive: true, force: true });
-        rmSync(projectPath, { recursive: true, force: true });
-      }
-    },
-  );
+        }).trim(),
+        "main",
+      );
 
-  it(
-    "replaces scaffold-created root Git history when requested",
-    { skip: !hasGit() },
-    async () => {
-      const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
-
-      try {
-        writeFileSync(join(projectPath, ".gitignore"), ".env.local\n");
-        writeFileSync(join(projectPath, "package.json"), "{}\n");
-        runGitWithTestIdentity("git", ["init", "--initial-branch=main"], {
+      execFileSync(
+        "git",
+        ["worktree", "add", "-b", "test-worktree", worktreePath, "main"],
+        {
           cwd: projectPath,
-        });
-        runGitWithTestIdentity("git", ["add", "package.json"], {
-          cwd: projectPath,
-        });
-        runGitWithTestIdentity("git", ["commit", "-m", "Initial commit"], {
-          cwd: projectPath,
-        });
-
-        writeFileSync(join(projectPath, ".worktreeinclude"), "/.env.local\n");
-        writeFileSync(join(projectPath, ".env.local"), "LOCAL_ONLY=1\n");
-        writeFileSync(join(projectPath, "README.md"), "# Test app\n");
-
-        const initialized = await initializeGitRepository(projectPath, {
-          runner: runGitWithTestIdentity,
-          resetExistingRootRepository: true,
-        });
-
-        assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
-        assert.equal(
-          execFileSync("git", ["rev-list", "--count", "HEAD"], {
-            cwd: projectPath,
+          encoding: "utf-8",
+          stdio: "pipe",
+          env: {
+            ...process.env,
+            GIT_CONFIG_GLOBAL: globalConfigPath,
+            GIT_CONFIG_NOSYSTEM: "1",
+          },
+        },
+      );
+      assert.equal(
+        realpathSync(
+          execFileSync("git", ["rev-parse", "--show-toplevel"], {
+            cwd: worktreePath,
             encoding: "utf-8",
+            env: {
+              ...process.env,
+              GIT_CONFIG_GLOBAL: globalConfigPath,
+              GIT_CONFIG_NOSYSTEM: "1",
+            },
           }).trim(),
-          "1",
-        );
+        ),
+        realpathSync(worktreePath),
+      );
+    } finally {
+      rmSync(worktreePath, { recursive: true, force: true });
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
 
-        const head = execFileSync(
-          "git",
-          ["show", "--name-only", "--oneline", "HEAD"],
-          {
-            cwd: projectPath,
-            encoding: "utf-8",
-          },
-        );
-        assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
-        assert.ok(head.includes(".worktreeinclude"));
-        assert.ok(!head.includes(".env.local"));
-        assert.ok(!head.includes("Initial commit\n"));
-      } finally {
-        rmSync(projectPath, { recursive: true, force: true });
-      }
-    },
-  );
+  it("replaces scaffold-created root Git history when requested", {
+    skip: !hasGit(),
+  }, async () => {
+    const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-git-"));
+
+    try {
+      writeFileSync(join(projectPath, ".gitignore"), ".env.local\n");
+      writeFileSync(join(projectPath, "package.json"), "{}\n");
+      runGitWithTestIdentity("git", ["init", "--initial-branch=main"], {
+        cwd: projectPath,
+      });
+      runGitWithTestIdentity("git", ["add", "package.json"], {
+        cwd: projectPath,
+      });
+      runGitWithTestIdentity("git", ["commit", "-m", "Initial commit"], {
+        cwd: projectPath,
+      });
+
+      writeFileSync(join(projectPath, ".worktreeinclude"), "/.env.local\n");
+      writeFileSync(join(projectPath, ".env.local"), "LOCAL_ONLY=1\n");
+      writeFileSync(join(projectPath, "README.md"), "# Test app\n");
+
+      const initialized = await initializeGitRepository(projectPath, {
+        runner: runGitWithTestIdentity,
+        resetExistingRootRepository: true,
+      });
+
+      assert.equal(initialized, GIT_INITIALIZATION_STATUS.COMMITTED);
+      assert.equal(
+        execFileSync("git", ["rev-list", "--count", "HEAD"], {
+          cwd: projectPath,
+          encoding: "utf-8",
+        }).trim(),
+        "1",
+      );
+
+      const head = execFileSync(
+        "git",
+        ["show", "--name-only", "--oneline", "HEAD"],
+        {
+          cwd: projectPath,
+          encoding: "utf-8",
+        },
+      );
+      assert.ok(head.includes(INITIAL_COMMIT_MESSAGE));
+      assert.ok(head.includes(".worktreeinclude"));
+      assert.ok(!head.includes(".env.local"));
+      assert.ok(!head.includes("Initial commit\n"));
+    } finally {
+      rmSync(projectPath, { recursive: true, force: true });
+    }
+  });
 });

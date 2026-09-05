@@ -12,7 +12,7 @@
   "scripts": {
     "start": "pnpm build:rules && tsx bin/cli.ts",
     "test": "pnpm build:rules && node --import tsx --test --test-force-exit test/e2e.test.ts",
-    "test:unit": "pnpm build:rules && node --import tsx --experimental-test-module-mocks --test test/utils.test.ts test/skills.test.ts test/supabase.test.ts test/scaffold.test.ts test/git.test.ts test/packages.test.ts test/format.test.ts test/templates.test.ts test/anti-slop.test.ts test/agent-guidance.test.ts test/verification.test.ts",
+    "test:unit": "pnpm build:rules && node --import tsx --experimental-test-module-mocks --test test/utils.test.ts test/skills.test.ts test/supabase.test.ts test/scaffold.test.ts test/git.test.ts test/packages.test.ts test/format.test.ts test/templates.test.ts test/anti-slop.test.ts test/agent-guidance.test.ts test/verification.test.ts test/playground.test.ts",
     "lint": "pnpm build:rules && biome check --error-on-warnings bin src scripts test && oxlint bin src scripts test",
     "format": "biome format --write bin src scripts test biome.json package.json tsconfig*.json",
     "check": "pnpm build:rules && biome check --write bin src scripts test && oxlint bin src scripts test",
@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit",
     "build": "pnpm build:rules && tsx scripts/build.ts",
     "prepack": "pnpm build",
-    "build:rules": "tsx scripts/build-rules.ts"
+    "build:rules": "tsx scripts/build-rules.ts",
+    "dev": "pnpm build:rules && esbuild scripts/dev/client.ts --bundle --format=esm --outfile=dist/dev/client.js && tsx scripts/dev/server.ts"
   },
   "keywords": [
     "create",
@@ -52,10 +53,11 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.0",
+    "@biomejs/biome": "2.4.8",
     "@changesets/cli": "3.0.0",
     "@oxlint/plugins": "1.81.0",
     "@types/node": "^22.20.1",
+    "esbuild": "0.28.2",
     "oxlint": "1.81.0",
     "tsx": "4.23.12",
     "typescript": "7.0.2"
