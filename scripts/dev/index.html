@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumos playground</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/client.js"></script>
+</head>
+<body>
+  <header><div><span class="eyebrow">CREATE LUMOS APP · LOCAL</span><h1>Your project playground.</h1><p>Create a real app from this checkout. Explore what ships with it.</p></div><span class="badge">Git-ignored workspace</span></header>
+  <main>
+    <section class="card setup" aria-labelledby="create-heading">
+      <h2 id="create-heading">Create a project</h2>
+      <p class="muted">Choose your setup. We’ll install everything.</p>
+      <form id="create-form">
+        <label>Project name<input name="name" required pattern="[a-z0-9][a-z0-9-]{0,63}" maxlength="64" placeholder="my-lumos-test" autocomplete="off"></label>
+        <div class="pair"><label>Framework<select name="framework"><option value="nextjs">Next.js</option><option value="expo">Expo</option></select></label><label>Package manager<select name="packageManager"><option value="pnpm">pnpm</option><option value="npm">npm</option></select></label></div>
+        <label id="template-field">Template<select name="template"><option value="notes-app">Basic Notes App</option><option value="bare">Bare</option></select></label>
+        <fieldset><legend>Integrations</legend>
+          <label class="check"><input type="checkbox" name="components" checked><span id="components-label">shadcn/ui components</span></label>
+          <label class="check"><input type="checkbox" name="supabase">Supabase</label>
+          <label class="check"><input type="checkbox" name="posthog">PostHog analytics</label>
+          <label class="check"><input type="checkbox" name="sentry">Sentry error tracking</label>
+        </fieldset>
+        <p class="muted small">Projects stay in <code>.playground/</code> and are ignored by this repo. Developer skill installation is available through the terminal installer.</p>
+        <button class="primary" id="create-button" type="submit">Create project <span aria-hidden="true">↗</span></button>
+      </form>
+      <p id="error" role="alert"></p>
+    </section>
+    <section class="card explorer" aria-labelledby="files-heading">
+      <div class="toolbar"><h2 id="files-heading">Explore files</h2><div class="tools"><select id="projects" aria-label="Project to explore"><option value="">No projects yet</option></select><button id="refresh" type="button">Refresh</button></div></div>
+      <p class="muted small location" id="location">Your generated projects will appear here.</p>
+      <div class="browser"><nav id="tree" aria-label="File tree"><p class="empty">Create your first project to explore its files.</p></nav><div class="preview"><div id="file-path">File preview</div><pre id="file-content">Select a file to see its contents.</pre></div></div>
+      <p class="muted small footnote">Dependencies, build output, and symbolic links are hidden. File previews are read-only.</p>
+    </section>
+    <section class="card activity" aria-labelledby="activity-heading"><div class="toolbar"><h2 id="activity-heading">Creation log</h2><span id="status" role="status">Ready when you are</span></div><pre id="log" tabindex="0">The installer’s progress will appear here. Creation can take a few minutes.</pre></section>
+  </main>
+  <footer>This dashboard creates projects; use their printed terminal commands to run the apps. <span id="connection" role="status"></span></footer>
+</body>
+</html>

@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  updatedAt: number;
-}
+const noteSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  updatedAt: z.number(),
+});
+const notesSchema = z.array(noteSchema);
+type Note = z.infer<typeof noteSchema>;
 
 const STORAGE_KEY = "lumos-notes";
 
@@ -15,7 +18,7 @@ function loadNotes(): Note[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Note[]) : [];
+    return raw ? notesSchema.parse(JSON.parse(raw)) : [];
   } catch {
     return [];
   }

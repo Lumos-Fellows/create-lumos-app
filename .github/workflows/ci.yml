@@ -20,6 +20,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: git diff --exit-code
+      - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:unit
       - name: Require a changeset for pull requests

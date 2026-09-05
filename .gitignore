@@ -1,4 +1,5 @@
 node_modules/
+dist/
 .DS_Store
 *.log
 test-*-e2e/
@@ -12,3 +13,9 @@ test-*-e2e/
 /.env.*
 !/.env.example
 !/.env.*.example
+
+# Compiled anti-slop rules and copied metadata
+/templates/shared/tools/oxlint/anti-slop/
+
+# Locally generated projects from the development dashboard
+/.playground/

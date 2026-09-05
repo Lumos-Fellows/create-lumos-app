@@ -4,23 +4,27 @@
   "description": "Scaffolding CLI for Lumos Fellows — create Next.js or Expo apps with best-practice defaults",
   "type": "module",
   "bin": {
-    "create-lumos-app": "bin/cli.js"
+    "create-lumos-app": "dist/bin/cli.js"
   },
   "files": [
-    "bin/",
-    "src/",
-    "templates/"
+    "dist/"
   ],
   "scripts": {
-    "start": "node bin/cli.js",
-    "test": "node --test --test-force-exit test/e2e.test.mjs",
-    "test:unit": "node --experimental-test-module-mocks --test test/utils.test.mjs test/skills.test.mjs test/supabase.test.mjs test/scaffold.test.mjs test/git.test.mjs test/packages.test.mjs test/format.test.mjs test/templates.test.mjs",
-    "lint": "biome lint bin src test",
-    "format": "biome format --write bin src test biome.json package.json",
-    "check": "biome check --write bin src test",
-    "prerelease": "pnpm test:unit && pnpm lint",
+    "start": "pnpm build:rules && tsx bin/cli.ts",
+    "test": "pnpm build:rules && node --import tsx --test --test-force-exit test/e2e.test.ts",
+    "test:unit": "pnpm build:rules && node --import tsx --experimental-test-module-mocks --test test/utils.test.ts test/skills.test.ts test/supabase.test.ts test/scaffold.test.ts test/git.test.ts test/packages.test.ts test/format.test.ts test/templates.test.ts test/anti-slop.test.ts test/agent-guidance.test.ts test/verification.test.ts test/playground.test.ts",
+    "lint": "pnpm build:rules && biome check --error-on-warnings bin src scripts test && oxlint bin src scripts test",
+    "format": "biome format --write bin src scripts test biome.json package.json tsconfig*.json",
+    "check": "pnpm build:rules && biome check --write bin src scripts test && oxlint bin src scripts test",
+    "verify": "tsx templates/shared/tools/verify.ts",
+    "prerelease": "pnpm typecheck && pnpm test:unit && pnpm lint",
     "changeset": "changeset",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm build:rules && tsx scripts/build.ts",
+    "prepack": "pnpm build",
+    "build:rules": "tsx scripts/build-rules.ts",
+    "dev": "pnpm build:rules && esbuild scripts/dev/client.ts --bundle --format=esm --outfile=dist/dev/client.js && tsx scripts/dev/server.ts"
   },
   "keywords": [
     "create",
@@ -42,14 +46,21 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "zod": "^4.5.4"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.8",
     "@changesets/cli": "3.0.0",
-    "@biomejs/biome": "2.0.0"
+    "@oxlint/plugins": "1.81.0",
+    "@types/node": "^22.20.1",
+    "esbuild": "0.28.2",
+    "oxlint": "1.81.0",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2"
   },
   "packageManager": "pnpm@10.29.3+sha256.a74f4dbd3f5a7ca874d004135271f0b697b683bf1fd2fc2133961161cd25b29c"
 }
