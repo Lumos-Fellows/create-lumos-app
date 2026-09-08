@@ -30,9 +30,10 @@ const server = createServer(async (request, response) => {
   const origin = `http://127.0.0.1:${address.port}`;
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("X-Content-Type-Options", "nosniff");
+  // Browser annotation tools inject inline styles for their overlays and cursors.
   response.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; frame-ancestors 'none'",
+    "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'",
   );
   const json = (status: number, value: ApiResponse) => {
     response.writeHead(status, { "Content-Type": "application/json" });
