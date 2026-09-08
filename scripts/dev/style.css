@@ -13,19 +13,6 @@ body {
   max-width: 1600px;
   margin-inline: auto;
 }
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 32px;
-}
-h1 {
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: 600;
-  letter-spacing: -1.5px;
-  margin: 10px 0;
-}
 h2 {
   font-size: 17px;
   margin: 0;
@@ -33,24 +20,6 @@ h2 {
 }
 p {
   line-height: 1.55;
-}
-header p {
-  color: #626a65;
-  margin: 0;
-}
-.eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
-  color: #526b5c;
-}
-.badge {
-  font-size: 12px;
-  background: #e1ebde;
-  color: #345640;
-  padding: 9px 13px;
-  border-radius: 20px;
-  white-space: nowrap;
 }
 main {
   display: grid;
@@ -73,10 +42,6 @@ main {
 }
 .small {
   font-size: 12px;
-}
-.setup > p {
-  font-size: 13px;
-  margin: 8px 0 24px;
 }
 form {
   display: grid;
@@ -127,9 +92,6 @@ legend {
   align-items: center;
   font-weight: 400;
   font-size: 13px;
-}
-form p {
-  margin: 0;
 }
 button {
   cursor: pointer;
@@ -188,7 +150,7 @@ button:disabled {
 .browser {
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr);
-  border-block: 1px solid #e4e8e0;
+  border-top: 1px solid #e4e8e0;
   min-height: 380px;
   height: 48vh;
 }
@@ -244,9 +206,6 @@ pre {
   overflow: auto;
   flex: 1;
 }
-.footnote {
-  margin: 12px 20px;
-}
 .empty {
   color: #727a71;
   padding: 16px;
@@ -266,17 +225,18 @@ pre {
   color: #426d4c;
 }
 #error {
+  font-size: 13px;
+  margin: 16px 0 0;
   color: #a03124;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-footer {
-  color: #747c73;
-  font-size: 12px;
-  margin-top: 22px;
-  line-height: 1.6;
+#error:empty,
+#connection:empty {
+  display: none;
 }
 #connection {
+  font-size: 12px;
   color: #a03124;
 }
 [hidden] {
@@ -294,12 +254,6 @@ footer {
   }
   .browser {
     grid-template-columns: 35% minmax(0, 1fr);
-  }
-  header {
-    align-items: start;
-  }
-  .badge {
-    display: none;
   }
 }
 @media (max-width: 480px) {
@@ -328,9 +282,6 @@ footer {
   }
 }
 
-header > div {
-  min-width: 0;
-}
 .card {
   min-width: 0;
 }
