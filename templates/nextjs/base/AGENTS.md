@@ -13,6 +13,7 @@
 
 Before starting work, read each rules file whose scope applies to the task. `.agents/rules/` is an organizational convention; do not assume a harness automatically loads its files. When adding, updating, or deleting a rules file, keep this index in sync.
 
+- Before adding or changing UI text, read [ui-copy.md](.agents/rules/ui-copy.md).
 - Before adding or changing environment variable access, read [env-vars.md](.agents/rules/env-vars.md).
 - Before editing UI or styles, read [styling.md](.agents/rules/styling.md).
 // -- SUPABASE_START --

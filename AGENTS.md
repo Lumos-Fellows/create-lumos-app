@@ -17,6 +17,7 @@ Only add information to the repository README.md that cannot be inferred directl
 
 Before starting work, read each rules file whose scope applies to the task. `.agents/rules/` is an organizational convention; do not assume a harness automatically loads its files. When adding, updating, or deleting a rules file, keep this index in sync.
 
+- Before adding or changing UI text, read [ui-copy.md](.agents/rules/ui-copy.md).
 - Before changing CLI architecture or scaffolding, read [architecture.md](.agents/rules/architecture.md).
 - Before editing templates, integrations, or generated tooling, read [conventions.md](.agents/rules/conventions.md).
 - Before changing validation or preparing a PR, read [testing.md](.agents/rules/testing.md).
