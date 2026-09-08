@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -107,13 +108,19 @@ writeFileSync(
   process.platform === "win32" ? "@exit /b 42\r\n" : "#!/bin/sh\nexit 42\n",
   { mode: 0o755 },
 );
+const workspace = join(root, "workspace");
+mkdirSync(workspace);
 const failedName = `playground-test-${process.pid}`;
 const server = spawn(
   process.execPath,
   ["--import", "tsx", "scripts/dev/server.ts"],
   {
     stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, PATH: `${fakeBin}${delimiter}${process.env.PATH}` },
+    env: {
+      ...process.env,
+      LUMOS_PLAYGROUND_DIR: workspace,
+      PATH: `${fakeBin}${delimiter}${process.env.PATH}`,
+    },
   },
 );
 let origin = "";
@@ -215,5 +222,112 @@ test("creation failures are reported and existing folders are preserved", async 
   await duplicate.text();
 });
 after(() =>
-  rmSync(join(".playground", failedName), { recursive: true, force: true }),
+  rmSync(join(workspace, failedName), { recursive: true, force: true }),
 );
+
+interface CommandRequest {
+  name: string;
+  command: string;
+}
+
+async function api(path: string, method = "GET", body?: CommandRequest) {
+  return fetch(origin + path, {
+    method,
+    headers: { Origin: origin, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+async function waitForJob(predicate: (log: string, status: string) => boolean) {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    const state = stateSchema.parse(await (await api("/api/state")).json());
+    if (state.job && predicate(state.job.log, state.job.status))
+      return state.job;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("Command did not reach the expected state.");
+}
+
+test("project commands stream output, stop the server tree, and gate deletion", async () => {
+  const project = join(workspace, "commands");
+  mkdirSync(project);
+  writeFileSync(
+    join(project, "package.json"),
+    JSON.stringify({
+      scripts: {
+        dev: "node server.cjs",
+        lint: 'node -e "process.exit(7)"',
+        deploy: "echo forbidden",
+      },
+    }),
+  );
+  writeFileSync(
+    join(project, "server.cjs"),
+    'const http = require("node:http"); const s = http.createServer((q,r) => r.end("works")); s.listen(0, "127.0.0.1", () => console.log("PORT=" + s.address().port));',
+  );
+  assert.deepEqual(await (await api("/api/commands?project=commands")).json(), [
+    "dev",
+    "lint",
+  ]);
+  assert.equal(
+    (await api("/api/commands", "POST", { name: "../escape", command: "dev" }))
+      .status,
+    400,
+  );
+  assert.equal(
+    (
+      await api("/api/commands", "POST", {
+        name: "commands",
+        command: "deploy",
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await api("/api/commands", "POST", { name: "commands", command: "build" }))
+      .status,
+    400,
+  );
+  assert.equal(
+    (await api("/api/commands", "POST", { name: "commands", command: "dev" }))
+      .status,
+    202,
+  );
+  const job = await waitForJob((log) => /PORT=\d+/.test(log));
+  const port = job.log.match(/PORT=(\d+)/)?.[1];
+  const appUrl = `http://127.0.0.1:${port}`;
+  assert.equal(await (await fetch(appUrl)).text(), "works");
+  assert.equal((await api("/api/projects", "DELETE")).status, 409);
+  assert.equal(
+    (await api("/api/commands", "POST", { name: "commands", command: "lint" }))
+      .status,
+    409,
+  );
+  assert.equal((await api("/api/stop", "POST")).status, 200);
+  await assert.rejects(fetch(appUrl));
+  await waitForJob((_log, status) => status === "stopped");
+  assert.equal(
+    (await api("/api/commands", "POST", { name: "commands", command: "lint" }))
+      .status,
+    202,
+  );
+  await waitForJob((_log, status) => status === "failed");
+  const outside = join(root, "keep");
+  mkdirSync(outside);
+  writeFileSync(join(outside, "keep.txt"), "keep");
+  if (process.platform !== "win32")
+    symlinkSync(outside, join(project, "outside"));
+  assert.equal(
+    (await fetch(`${origin}/api/projects`, { method: "DELETE" })).status,
+    403,
+  );
+  assert.equal(existsSync(project), true);
+  assert.equal((await api("/api/projects", "DELETE")).status, 200);
+  assert.equal(existsSync(join(outside, "keep.txt")), true);
+  assert.equal(existsSync(project), false);
+  assert.deepEqual(await (await api("/api/state")).json(), {
+    projects: [],
+    job: null,
+  });
+});

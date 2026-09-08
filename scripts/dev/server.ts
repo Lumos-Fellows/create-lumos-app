@@ -1,19 +1,25 @@
-import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stripVTControlCharacters } from "node:util";
 import { z } from "zod";
-import { type ApiResponse, type Job, projectInput } from "./contracts.ts";
+import { deleteProjects, projectCommands } from "./actions.ts";
+import {
+  type ApiResponse,
+  commandInput,
+  type Job,
+  projectInput,
+  projectName,
+} from "./contracts.ts";
 import { listFiles, readFile, workspacePath } from "./files.ts";
+import { Jobs } from "./jobs.ts";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const repo = join(directory, "../..");
-const workspace = join(repo, ".playground");
+const workspace = process.env.LUMOS_PLAYGROUND_DIR ?? join(repo, ".playground");
 mkdirSync(workspace, { recursive: true });
 workspacePath(workspace, "");
-let job: Job | null = null;
+const jobs = new Jobs();
 const addressSchema = z.object({ port: z.number() });
 
 async function readInput(request: IncomingMessage) {
@@ -22,7 +28,8 @@ async function readInput(request: IncomingMessage) {
     body += String(chunk);
     if (body.length > 8192) throw new Error("Request is too large.");
   }
-  return projectInput.parse(JSON.parse(body));
+  const input: unknown = JSON.parse(body);
+  return input;
 }
 
 const server = createServer(async (request, response) => {
@@ -54,8 +61,13 @@ const server = createServer(async (request, response) => {
           projects: listFiles(workspace, "")
             .filter((entry) => entry.directory)
             .map((entry) => entry.name),
-          job,
+          job: jobs.current,
         });
+        return;
+      }
+      if (url.pathname === "/api/commands") {
+        const name = projectName.parse(url.searchParams.get("project"));
+        json(200, projectCommands(workspace, name).commands);
         return;
       }
       if (url.pathname === "/api/tree") {
@@ -82,64 +94,89 @@ const server = createServer(async (request, response) => {
         return;
       }
     }
-    if (request.method === "POST" && url.pathname === "/api/projects") {
+    if (request.method === "POST" || request.method === "DELETE") {
       if (
         request.headers.origin !== origin ||
         request.headers["content-type"] !== "application/json"
       ) {
-        json(403, { error: "Create projects through the local dashboard." });
+        json(403, { error: "Use the local dashboard for this action." });
         return;
       }
-      const input = await readInput(request);
-      if (job?.status === "running") {
-        json(409, { error: "Wait for the current project to finish." });
+      if (request.method === "POST" && url.pathname === "/api/stop") {
+        await jobs.stop();
+        json(200, {
+          projects: listFiles(workspace, "")
+            .filter((entry) => entry.directory)
+            .map((entry) => entry.name),
+          job: jobs.current,
+        });
         return;
       }
+      // Check the lock after reading input, without yielding between the check and launch.
+      const input = request.method === "POST" ? await readInput(request) : null;
+      if (jobs.busy) {
+        json(409, {
+          error: "Stop the running command or wait for it to finish.",
+        });
+        return;
+      }
+      if (request.method === "DELETE" && url.pathname === "/api/projects") {
+        deleteProjects(workspace);
+        jobs.current = null;
+        json(200, { projects: [], job: null });
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/commands") {
+        const command = commandInput.parse(input);
+        const project = projectCommands(workspace, command.name);
+        if (!project.commands.includes(command.command))
+          throw new Error(
+            "This script is not available in the selected project.",
+          );
+        const current: Job = {
+          name: command.name,
+          command: command.command,
+          status: "running",
+          log: `$ ${project.manager} run ${command.command}\n`,
+        };
+        jobs.launch(
+          current,
+          project.manager,
+          ["run", command.command],
+          project.directory,
+        );
+        json(202, current);
+        return;
+      }
+      if (request.method !== "POST" || url.pathname !== "/api/projects") {
+        json(404, { error: "Not found." });
+        return;
+      }
+      const project = projectInput.parse(input);
       workspacePath(workspace, "");
-      if (existsSync(join(workspace, input.name))) {
+      if (existsSync(join(workspace, project.name))) {
         json(409, {
           error: "That folder already exists. Choose a new project name.",
         });
         return;
       }
       const current: Job = {
-        name: input.name,
+        name: project.name,
+        command: "create",
         status: "running",
-        log: `Creating ${input.name}…\n`,
+        log: `Creating ${project.name}…\n`,
       };
-      job = current;
-      const child = spawn(
+      jobs.launch(
+        current,
         process.execPath,
         [
           "--import",
-          "tsx",
+          import.meta.resolve("tsx"),
           join(directory, "create.ts"),
-          JSON.stringify(input),
+          JSON.stringify(project),
         ],
-        {
-          cwd: workspace,
-          env: { ...process.env, CI: "true", SUPABASE_TELEMETRY_DISABLED: "1" },
-          stdio: ["ignore", "pipe", "pipe"],
-        },
+        workspace,
       );
-      const append = (data: Buffer) => {
-        current.log = (
-          current.log + stripVTControlCharacters(data.toString())
-        ).slice(-100_000);
-      };
-      child.stdout.on("data", append);
-      child.stderr.on("data", append);
-      child.on("error", (error) => {
-        current.status = "failed";
-        current.log += `\n${error.message}`;
-      });
-      child.on("close", (code) => {
-        current.status = code === 0 ? "ready" : "failed";
-        current.log +=
-          code === 0
-            ? "\nProject ready. Select a file to inspect it."
-            : "\nCreation failed. See the log above; partial files are kept for inspection. Retry with a new name.";
-      });
       json(202, current);
       return;
     }
@@ -156,3 +193,9 @@ server.listen(0, "127.0.0.1", () => {
     `\nLumos playground: http://127.0.0.1:${address.port}\nProjects: ${workspace}\n`,
   );
 });
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    void jobs.stop().then(() => server.close(() => process.exit(0)));
+  });
+}

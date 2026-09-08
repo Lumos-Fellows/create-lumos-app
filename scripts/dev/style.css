@@ -285,3 +285,36 @@ pre {
 .card {
   min-width: 0;
 }
+
+.toolbar,
+.tools {
+  flex-wrap: wrap;
+}
+.tools select {
+  width: auto;
+}
+.tools button {
+  white-space: nowrap;
+}
+.actions {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.actions #status {
+  flex-basis: 100%;
+}
+#status:empty {
+  display: none;
+}
+.danger {
+  color: #a03124;
+}
+dialog {
+  max-width: min(420px, calc(100% - 32px));
+  border: 1px solid #dce1d8;
+  border-radius: 14px;
+  padding: 24px;
+}
+dialog::backdrop {
+  background: #20272466;
+}

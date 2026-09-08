@@ -1,4 +1,7 @@
 import {
+  type CommandInput,
+  commandName,
+  commandsSchema,
   entriesSchema,
   errorSchema,
   jobSchema,
@@ -28,6 +31,101 @@ const tree = element("tree");
 let selectedProject = "";
 let selectedFile = "";
 let pending = false;
+let running = false;
+let availableCommands: string[] = [];
+
+function button(id: string) {
+  const result = element(id);
+  if (!(result instanceof HTMLButtonElement))
+    throw new Error(`Missing button: ${id}`);
+  return result;
+}
+const commandSelect = element("command");
+const deleteDialog = element("delete-dialog");
+if (
+  !(commandSelect instanceof HTMLSelectElement) ||
+  !(deleteDialog instanceof HTMLDialogElement)
+)
+  throw new Error("Project controls are unavailable.");
+const commands = commandSelect;
+const confirmation = deleteDialog;
+
+function updateControls() {
+  const busy = pending || running;
+  submitButton.disabled = busy;
+  button("delete-all").disabled = busy || !selectedProject;
+  button("start-dev").disabled =
+    busy ||
+    !availableCommands.some((name) => name === "dev" || name === "start");
+  button("run-command").disabled = busy || !commands.value;
+  button("stop").disabled = pending || !running;
+  commands.disabled = busy || !commands.options.length;
+}
+
+async function refreshCommands() {
+  const project = selectedProject;
+  availableCommands = [];
+  commands.replaceChildren();
+  updateControls();
+  if (!project) return;
+  try {
+    const response = await request(
+      `/api/commands?project=${encodeURIComponent(project)}`,
+    );
+    const result = commandsSchema.parse(await response.json());
+    if (selectedProject !== project) return;
+    availableCommands = result;
+    commands.replaceChildren(
+      ...result
+        .filter((name) => name !== "dev" && name !== "start")
+        .map((name) => new Option(name, name)),
+    );
+  } catch {
+    // Partially created projects may not have a manifest yet.
+  }
+  updateControls();
+}
+
+async function mutate(path: string, method: string, input?: CommandInput) {
+  pending = true;
+  showError("");
+  updateControls();
+  try {
+    await request(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: input ? JSON.stringify(input) : undefined,
+    });
+    await refreshState();
+  } catch (error) {
+    showError(String(error));
+  } finally {
+    pending = false;
+    updateControls();
+  }
+}
+
+button("delete-all").addEventListener("click", () => confirmation.showModal());
+button("cancel-delete").addEventListener("click", () => confirmation.close());
+button("confirm-delete").addEventListener("click", () => {
+  confirmation.close();
+  void mutate("/api/projects", "DELETE");
+});
+button("start-dev").addEventListener("click", () => {
+  void mutate("/api/commands", "POST", {
+    name: selectedProject,
+    command: availableCommands.includes("dev") ? "dev" : "start",
+  });
+});
+button("run-command").addEventListener("click", () => {
+  void mutate("/api/commands", "POST", {
+    name: selectedProject,
+    command: commandName.parse(commands.value),
+  });
+});
+button("stop").addEventListener("click", () => {
+  void mutate("/api/stop", "POST");
+});
 
 function showError(message: string) {
   element("error").textContent = message;
@@ -96,7 +194,10 @@ async function refreshTree() {
   selectedFile = "";
   element("file-path").textContent = "File preview";
   element("file-content").textContent = "Select a file to see its contents.";
-  if (!selectedProject) return;
+  if (!selectedProject) {
+    tree.textContent = "No projects yet.";
+    return;
+  }
   // Build offscreen so switching projects cannot display a stale response.
   const contents = document.createElement("div");
   const project = selectedProject;
@@ -110,7 +211,8 @@ async function refreshState() {
   const state = stateSchema.parse(await response.json());
   element("connection").textContent = "";
   const names = state.projects;
-  if (state.job && !names.includes(state.job.name)) names.push(state.job.name);
+  if (state.job?.status === "running" && !names.includes(state.job.name))
+    names.push(state.job.name);
   if (
     Array.from(projectSelect.options)
       .map((option) => option.value)
@@ -121,13 +223,15 @@ async function refreshState() {
     );
     if (!names.length) projectSelect.add(new Option("No projects yet", ""));
   }
-  if (!selectedProject && names[0]) {
-    selectedProject = names[0];
+  if (!names.includes(selectedProject)) {
+    selectedProject = names[0] ?? "";
     await refreshTree();
+    await refreshCommands();
   }
   projectSelect.value = selectedProject;
   element("location").textContent = `.playground/${selectedProject}`;
-  submitButton.disabled = pending || state.job?.status === "running";
+  running = state.job?.status === "running";
+  updateControls();
   if (state.job) {
     const log = element("log");
     const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
@@ -136,15 +240,21 @@ async function refreshState() {
       if (atBottom) log.scrollTop = log.scrollHeight;
     }
     element("status").textContent =
-      `${state.job.name} · ${state.job.status === "running" ? "Creating…" : state.job.status === "ready" ? "Ready" : "Failed"}`;
-    const status = `${state.job.name}:${state.job.status}`;
+      `${state.job.name} · ${state.job.command} · ${state.job.status}`;
+    const status = `${state.job.name}:${state.job.command}:${state.job.status}`;
     if (
       status !== lastStatus &&
       state.job.status !== "running" &&
       selectedProject === state.job.name
-    )
+    ) {
       await refreshTree();
+      await refreshCommands();
+    }
     lastStatus = status;
+  } else {
+    element("log").textContent = "";
+    element("status").textContent = "";
+    lastStatus = "";
   }
 }
 
@@ -191,14 +301,17 @@ projectForm.addEventListener("submit", (event) => {
       showError(String(error));
     } finally {
       pending = false;
+      updateControls();
     }
   })();
 });
 projectSelect.addEventListener("change", () => {
   selectedProject = projectSelect.value;
+  void refreshCommands();
   void refreshTree().catch((error: Error) => showError(error.message));
 });
 element("refresh").addEventListener("click", () => {
+  void refreshCommands();
   void refreshTree().catch((error: Error) => showError(error.message));
 });
 async function poll() {
