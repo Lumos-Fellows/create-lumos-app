@@ -18,6 +18,7 @@ import { describe, it } from "node:test";
 import {
   BIOME_VERSION,
   getBasePackageDeps,
+  KNIP_VERSION,
   OXLINT_VERSION,
   packageManagerSpec,
   pnpmWorkspaceWithAllowBuilds,
@@ -30,6 +31,7 @@ describe("getBasePackageDeps", () => {
       const { devDeps } = getBasePackageDeps(framework);
       assert.ok(devDeps.includes(`oxlint@${OXLINT_VERSION}`));
       assert.ok(devDeps.includes(`@oxlint/plugins@${OXLINT_VERSION}`));
+      assert.ok(devDeps.includes(`knip@${KNIP_VERSION}`));
       const repo = packageJsonSchema.parse(
         JSON.parse(
           readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
@@ -37,6 +39,7 @@ describe("getBasePackageDeps", () => {
       );
       assert.equal(repo.devDependencies?.oxlint, OXLINT_VERSION);
       assert.equal(repo.devDependencies?.["@oxlint/plugins"], OXLINT_VERSION);
+      assert.equal(repo.devDependencies?.knip, KNIP_VERSION);
     });
   }
   it("includes Expo packages imported by the generated base template", () => {
@@ -95,6 +98,7 @@ describe("setupPackages", () => {
         );
         assert.equal(pkg.scripts.dev, "next dev");
         assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
+        assert.equal(pkg.scripts.knip, "knip");
       } finally {
         rmSync(projectPath, { recursive: true, force: true });
       }

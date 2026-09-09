@@ -722,6 +722,37 @@ describe("e2e scaffolding", {
               assert.fail(`lint failed:\n${output}`);
             }
           });
+
+          it("passes Knip and detects unused application files", () => {
+            const clean = spawnSync(options.packageManager, ["run", "knip"], {
+              cwd: targetDir,
+              encoding: "utf8",
+              shell: process.platform === "win32",
+            });
+            assert.ifError(clean.error);
+            assert.equal(clean.status, 0, clean.stdout + clean.stderr);
+            const fixture = join(targetDir, "knip-unused-probe.ts");
+            try {
+              writeFileSync(fixture, 'export const unused = "fixture";\n');
+              const unused = spawnSync(
+                options.packageManager,
+                ["run", "knip"],
+                {
+                  cwd: targetDir,
+                  encoding: "utf8",
+                  shell: process.platform === "win32",
+                },
+              );
+              assert.ifError(unused.error);
+              assert.notEqual(unused.status, 0);
+              assert.match(
+                unused.stdout + unused.stderr,
+                /knip-unused-probe\.ts/,
+              );
+            } finally {
+              rmSync(fixture, { force: true });
+            }
+          });
         });
       }
     });

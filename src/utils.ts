@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PackageJson, packageJsonSchema } from "./package-json.ts";
 
-export const DEBUG_MODE = false;
+const DEBUG_MODE = false;
 
 function debug(...args: string[]) {
   if (DEBUG_MODE) console.log("[DEBUG]", ...args);

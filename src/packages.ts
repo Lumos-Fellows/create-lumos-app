@@ -11,8 +11,9 @@ import type {
 import { exec, readJson, run, writeJson } from "./utils.ts";
 
 export const BIOME_VERSION = "2.4.8";
+export const KNIP_VERSION = "6.35.0";
 export const OXLINT_VERSION = "1.81.0";
-export const TSX_VERSION = "4.23.12";
+const TSX_VERSION = "4.23.12";
 interface BuildApprovals {
   [packageName: string]: boolean;
 }
@@ -34,7 +35,7 @@ export function packageManagerSpec(
   return normalizedVersion ? `${packageManager}@${normalizedVersion}` : null;
 }
 
-export function detectPackageManagerVersion(packageManager: PackageManager) {
+function detectPackageManagerVersion(packageManager: PackageManager) {
   try {
     return exec(`${packageManager} --version`);
   } catch {
@@ -111,7 +112,7 @@ export function pnpmWorkspaceWithAllowBuilds(
   return retainedLines.length > 0 ? `${retainedLines.join("\n")}\n` : "";
 }
 
-export function writePnpmWorkspaceAllowBuilds(
+function writePnpmWorkspaceAllowBuilds(
   projectPath: string,
   buildApprovals: BuildApprovals,
 ) {
@@ -144,6 +145,7 @@ export function getBasePackageDeps(framework: Framework) {
         `oxlint@${OXLINT_VERSION}`,
         `@oxlint/plugins@${OXLINT_VERSION}`,
         `tsx@${TSX_VERSION}`,
+        `knip@${KNIP_VERSION}`,
         "@types/node@22",
       ],
     };
@@ -165,6 +167,7 @@ export function getBasePackageDeps(framework: Framework) {
       `oxlint@${OXLINT_VERSION}`,
       `@oxlint/plugins@${OXLINT_VERSION}`,
       `tsx@${TSX_VERSION}`,
+      `knip@${KNIP_VERSION}`,
       "@types/node@22",
       "nativewind",
       "tailwindcss@3",
@@ -213,6 +216,7 @@ export async function setupPackages(
         ? "next typegen && tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json"
         : "tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json",
     verify: "tsx tools/verify.ts",
+    knip: "knip",
   };
 
   // Enforce pnpm if selected
@@ -222,6 +226,14 @@ export async function setupPackages(
 
   // Add Expo-specific scripts
   if (framework === "expo") {
+    // Our screens replace the upstream starter screens that use these packages.
+    for (const name of [
+      "expo-splash-screen",
+      "expo-symbols",
+      "expo-web-browser",
+    ]) {
+      if (pkg.dependencies) delete pkg.dependencies[name];
+    }
     pkg.scripts.start = "expo start --dev-client";
     pkg.scripts.prebuild = "EXPO_NO_GIT_STATUS=1 expo prebuild --clean";
     pkg.scripts.android =

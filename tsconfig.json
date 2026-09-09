@@ -16,6 +16,7 @@
     "scripts/**/*.ts",
     "test/**/*.ts",
     "templates/shared/tools/**/*.ts",
-    "vendor/anti-slop/**/*.ts"
+    "vendor/anti-slop/**/*.ts",
+    "knip.ts"
   ]
 }

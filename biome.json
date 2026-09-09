@@ -35,7 +35,8 @@
       "package.json",
       "scripts/**",
       "tsconfig*.json",
-      "!!.playground"
+      "!!.playground",
+      "knip.ts"
     ]
   }
 }

@@ -20,10 +20,15 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  return <PHProvider client={posthog}>{children}</PHProvider>;
+  return (
+    <PHProvider client={posthog}>
+      <PostHogPageview />
+      {children}
+    </PHProvider>
+  );
 }
 
-export function PostHogPageview() {
+function PostHogPageview() {
   const posthogClient = usePostHog();
 
   useEffect(() => {
