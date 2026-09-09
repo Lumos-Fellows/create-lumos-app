@@ -30,6 +30,9 @@
       },
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "style": {
+        "noProcessEnv": "error"
       }
     }
   },
@@ -48,5 +51,20 @@
     "formatter": {
       "enabled": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "env.ts",
+        "tools/verify.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    }
+  ]
 }

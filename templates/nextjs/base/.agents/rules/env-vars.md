@@ -7,4 +7,4 @@ import { env } from "~/env";
 env.NEXT_PUBLIC_SUPABASE_URL;
 ```
 
-The only place `process.env` should appear is inside the `runtimeEnv` block of `src/env.ts` itself.
+Keep direct reads inside `src/env.ts`. Verification may forward the process environment to child commands. Any additional runtime-required exception must name the exact file in the lint configuration.
