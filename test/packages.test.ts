@@ -1,4 +1,5 @@
 import { packageJsonSchema } from "../src/package-json.ts";
+import { NODE_ENGINE } from "../src/runtime.ts";
 /**
  * Unit tests for package dependency planning.
  *
@@ -99,6 +100,7 @@ describe("setupPackages", () => {
         assert.equal(pkg.scripts.dev, "next dev");
         assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
         assert.equal(pkg.scripts.knip, "knip");
+        assert.equal(pkg.engines?.node, NODE_ENGINE);
       } finally {
         rmSync(projectPath, { recursive: true, force: true });
       }

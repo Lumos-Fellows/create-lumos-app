@@ -9,3 +9,5 @@ Add targeted UI-copy and routing lint checks, preserve action labels during load
 Wire Sentry across Next.js runtimes and keep optional integrations inactive until configured, so generated apps start without external service credentials.
 
 Check that maintained source belongs to a strict TypeScript program, and restrict JavaScript to typechecked runtime configuration.
+
+Require Node.js 20.19+ within 20.x, or 22.12+, and stop early on unsupported runtimes.

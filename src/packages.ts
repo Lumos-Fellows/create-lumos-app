@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.ts";
+import { NODE_ENGINE } from "./runtime.ts";
 import { configureTypecheck } from "./tooling.ts";
 import type {
   CommandRunner,
@@ -200,6 +201,7 @@ export async function setupPackages(
 
   // Use the pre-resolved name (handles "." in uppercase directories).
   pkg.name = options.resolvedName;
+  pkg.engines = { ...pkg.engines, node: NODE_ENGINE };
   const selectedPackageManager = packageManagerSpec(
     packageManager,
     versionResolver(packageManager),

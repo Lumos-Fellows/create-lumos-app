@@ -5,6 +5,7 @@ export const packageJsonSchema = z
     name: z.string().optional(),
     packageManager: z.string().optional(),
     scripts: z.record(z.string(), z.string()).default({}),
+    engines: z.record(z.string(), z.string()).optional(),
     dependencies: z.record(z.string(), z.string()).optional(),
     devDependencies: z.record(z.string(), z.string()).optional(),
     pnpm: z

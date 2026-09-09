@@ -9,6 +9,7 @@ import { setupPackages } from "./packages.ts";
 import { gatherOptions } from "./prompts.ts";
 import { generateReadme } from "./readme.ts";
 import { installRnr } from "./rnr.ts";
+import { assertNodeVersion } from "./runtime.ts";
 import { scaffold } from "./scaffold.ts";
 import { installShadcn } from "./shadcn.ts";
 import { installSkills, selectSkills } from "./skills.ts";
@@ -19,6 +20,7 @@ import { isCurrentDir, projectDir, sanitizePackageName } from "./utils.ts";
 
 export async function main(args: string[]) {
   try {
+    assertNodeVersion();
     // 1. Gather user options
     const options = await gatherOptions(args);
 
@@ -30,6 +32,7 @@ export async function main(args: string[]) {
 }
 
 export async function createProject(options: ProjectOptions) {
+  assertNodeVersion();
   // Resolve a valid package name — when "." is used, derive it from the
   // current directory name (which may contain uppercase or special chars).
   if (isCurrentDir(options.name)) {
