@@ -1,7 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
   "files": {
-    "includes": ["**", "!.expo", "!.agents", "!.claude/worktrees"]
+    "includes": [
+      "**",
+      "!.expo",
+      "!.agents",
+      "!.claude/worktrees",
+      "!tools/oxlint"
+    ]
   },
   "assist": {
     "actions": {
@@ -24,6 +30,10 @@
       },
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "style": {
+        "noProcessEnv": "error",
+        "noNestedTernary": "error"
       }
     }
   },
@@ -42,5 +52,20 @@
     "formatter": {
       "enabled": true
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "env.ts",
+        "tools/verify.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    }
+  ]
 }

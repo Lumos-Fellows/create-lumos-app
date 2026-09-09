@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { env } from "~/env";
 
 export async function createClient() {
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   const cookieStore = await cookies();
 
   return createServerClient(

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -18,6 +18,9 @@
       "recommended": true,
       "correctness": {
         "noUnusedImports": "error"
+      },
+      "style": {
+        "noNestedTernary": "error"
       }
     }
   },
@@ -27,6 +30,17 @@
     }
   },
   "files": {
-    "includes": ["bin/**", "src/**", "test/**", "biome.json", "package.json"]
+    "includes": [
+      "bin/**",
+      "src/**",
+      "test/**",
+      "biome.json",
+      "package.json",
+      "scripts/**",
+      "tsconfig*.json",
+      "!!.playground",
+      "knip.ts",
+      "templates/shared/tools/**/*.ts"
+    ]
   }
 }
