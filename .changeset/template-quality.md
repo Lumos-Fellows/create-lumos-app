@@ -11,3 +11,5 @@ Wire Sentry across Next.js runtimes and keep optional integrations inactive unti
 Check that maintained source belongs to a strict TypeScript program, and restrict JavaScript to typechecked runtime configuration.
 
 Require Node.js 20.19+ within 20.x, or 22.12+, and stop early on unsupported runtimes.
+
+Preserve generated Git ignore rules in the npm package and fail builds if npm would omit a built file.

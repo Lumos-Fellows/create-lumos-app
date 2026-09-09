@@ -139,7 +139,7 @@ describe("Next.js env.ts uses process.env in runtimeEnv", () => {
 
 describe("Shared gitignore protects local generated-project files", () => {
   const gitignore = readFileSync(
-    join(TEMPLATES, "shared", ".gitignore"),
+    join(TEMPLATES, "shared", "_gitignore"),
     "utf-8",
   )
     .replaceAll("\r\n", "\n")
@@ -188,7 +188,7 @@ describe("Shared Claude worktree include copies local generated-project config",
 
     try {
       cpSync(
-        join(TEMPLATES, "shared", ".gitignore"),
+        join(TEMPLATES, "shared", "_gitignore"),
         join(projectPath, ".gitignore"),
       );
       cpSync(worktreeincludePath, join(projectPath, ".worktreeinclude"));

@@ -105,6 +105,9 @@ export function applyOverlay(projectPath: string, options: OverlayOptions) {
   // 2d. Rename _biome.json → biome.json (prefixed to avoid Biome config discovery in this repo)
   renameSync(join(projectPath, "_biome.json"), join(projectPath, "biome.json"));
 
+  // npm omits files named .gitignore from published archives.
+  renameSync(join(projectPath, "_gitignore"), join(projectPath, ".gitignore"));
+
   // 2e. Expo-specific: replace app.json with app.config.values.js and inject project name
   if (framework === "expo") {
     const appJson = join(projectPath, "app.json");
@@ -136,7 +139,11 @@ export function applyOverlay(projectPath: string, options: OverlayOptions) {
  * Recursively copy a directory, overwriting existing files.
  */
 function copyDir(src: string, dest: string) {
-  cpSync(src, dest, { recursive: true, force: true });
+  cpSync(src, dest, {
+    recursive: true,
+    force: true,
+    filter: (path) => basename(path) !== ".DS_Store",
+  });
 }
 
 /**
