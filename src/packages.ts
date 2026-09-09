@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { getEnvVars, getIntegrationDeps } from "./integrations.ts";
+import { configureTypecheck } from "./tooling.ts";
 import type {
   CommandRunner,
   Framework,
@@ -195,6 +196,7 @@ export async function setupPackages(
     options;
   const pkgPath = join(projectPath, "package.json");
   const pkg = readJson(pkgPath);
+  configureTypecheck(projectPath);
 
   // Use the pre-resolved name (handles "." in uppercase directories).
   pkg.name = options.resolvedName;
@@ -213,8 +215,8 @@ export async function setupPackages(
     lint: "biome check --error-on-warnings . && oxlint .",
     typecheck:
       framework === "nextjs"
-        ? "next typegen && tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json"
-        : "tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json",
+        ? "next typegen && tsx tools/typecheck.ts"
+        : "tsx tools/typecheck.ts",
     verify: "tsx tools/verify.ts",
     knip: "knip",
   };

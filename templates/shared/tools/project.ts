@@ -2,7 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { z } from "zod";
 
 const manifest = z.object({
-  packageManager: z.string().regex(/^(npm|pnpm)@/).optional(),
+  packageManager: z
+    .string()
+    .regex(/^(npm|pnpm)@/)
+    .optional(),
   scripts: z.record(z.string(), z.string()).default({}),
 });
 

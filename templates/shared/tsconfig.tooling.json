@@ -17,6 +17,13 @@
   ],
   "exclude": [
     "node_modules",
-    "tools/oxlint"
+    "tools/oxlint",
+    ".agents/skills",
+    ".claude/skills",
+    ".codex/skills",
+    ".claude/worktrees",
+    "out",
+    "web-build",
+    ".vercel"
   ]
 }

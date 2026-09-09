@@ -4,7 +4,9 @@
     "./templates/shared/.oxlintrc.json"
   ],
   "ignorePatterns": [
-    "templates/**"
+    "templates/nextjs/**",
+    "templates/expo/**",
+    "templates/shared/tools/oxlint/**"
   ],
   "overrides": [
     {

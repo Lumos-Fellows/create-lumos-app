@@ -651,7 +651,13 @@ describe("e2e scaffolding", {
             });
           }
 
-          it("passes TypeScript type check", () => {
+          it("typechecks maintained code without checking installed skill scripts", () => {
+            const skill = join(targetDir, ".agents/skills/third-party-check");
+            mkdirSync(skill, { recursive: true });
+            writeFileSync(
+              join(skill, "script.ts"),
+              'const value: number = "third-party";\n',
+            );
             try {
               execFileSync(options.packageManager, ["run", "typecheck"], {
                 cwd: targetDir,
@@ -662,6 +668,8 @@ describe("e2e scaffolding", {
               assert.fail(
                 `Generated typecheck script failed:\n${(err instanceof Error && "stdout" in err ? String(err.stdout) : "") || (err instanceof Error && "stderr" in err ? String(err.stderr) : "")}`,
               );
+            } finally {
+              rmSync(skill, { recursive: true, force: true });
             }
           });
 

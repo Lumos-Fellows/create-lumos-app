@@ -5,7 +5,14 @@ import { readProject } from "./project.js";
 
 const { scripts, packageManager } = readProject();
 
-for (const name of ["format", "lint", "typecheck", "knip", "test:unit", "test"]) {
+for (const name of [
+  "format",
+  "lint",
+  "typecheck",
+  "knip",
+  "test:unit",
+  "test",
+]) {
   if (!scripts[name]) continue;
   const result = spawnSync(packageManager, ["run", name], {
     stdio: "inherit",

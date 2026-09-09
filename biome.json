@@ -39,7 +39,8 @@
       "scripts/**",
       "tsconfig*.json",
       "!!.playground",
-      "knip.ts"
+      "knip.ts",
+      "templates/shared/tools/**/*.ts"
     ]
   }
 }
