@@ -8,3 +8,5 @@ env.NEXT_PUBLIC_SUPABASE_URL;
 ```
 
 Keep direct reads inside `src/env.ts`. Verification may forward the process environment to child commands. Any additional runtime-required exception must name the exact file in the lint configuration.
+
+Next.js must read `NEXT_RUNTIME` directly in instrumentation for build-time branch selection. The Sentry build wrapper reads its upload token from the build environment. These are exact-file lint exceptions.

@@ -39,6 +39,7 @@ import { installShadcn } from "../src/shadcn.ts";
 import { initSupabase } from "../src/supabase.ts";
 import { projectDir } from "../src/utils.ts";
 import { assertAgentGuidance } from "./helpers/agent-guidance.ts";
+import { verifySentryRuntime } from "./helpers/sentry-runtime.ts";
 
 // Prevent npx from prompting "Ok to proceed?" when installing packages
 process.env.npm_config_yes = "true";
@@ -722,6 +723,12 @@ describe("e2e scaffolding", {
               assert.fail(`lint failed:\n${output}`);
             }
           });
+
+          if (options.framework === "nextjs" && options.sentry) {
+            it("starts without service credentials and captures Sentry server errors", async () => {
+              await verifySentryRuntime(targetDir);
+            });
+          }
 
           it("passes Knip and detects unused application files", () => {
             const clean = spawnSync(options.packageManager, ["run", "knip"], {

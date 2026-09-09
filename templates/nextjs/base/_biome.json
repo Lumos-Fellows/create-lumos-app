@@ -54,7 +54,9 @@
     {
       "includes": [
         "src/env.ts",
-        "tools/verify.ts"
+        "tools/verify.ts",
+        "next.config.ts",
+        "src/instrumentation.ts"
       ],
       "linter": {
         "rules": {

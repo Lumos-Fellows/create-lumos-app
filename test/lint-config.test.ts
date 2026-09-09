@@ -22,7 +22,10 @@ for (const framework of ["nextjs", "expo"]) {
         join(project, "biome.json"),
       );
       const envPath = framework === "nextjs" ? "src/env.ts" : "env.ts";
-      for (const path of [envPath, "tools/verify.ts", "app/code.ts"]) {
+      const paths = [envPath, "tools/verify.ts", "app/code.ts"];
+      if (framework === "nextjs")
+        paths.push("next.config.ts", "src/instrumentation.ts");
+      for (const path of paths) {
         mkdirSync(dirname(join(project, path)), { recursive: true });
         writeFileSync(
           join(project, path),

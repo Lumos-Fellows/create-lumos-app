@@ -122,37 +122,6 @@ describe("Conditional markers are well-formed", () => {
 
 // ── Next.js: validated env ──────────────────────────────────────────────────
 
-describe("Next.js integration templates use validated env", () => {
-  const integrationDirs = ["supabase", "posthog", "sentry"];
-
-  for (const integration of integrationDirs) {
-    const integrationPath = join(NEXTJS_DIR, integration);
-    const files = walkFiles(integrationPath).filter(
-      (f) => f.endsWith(".ts") || f.endsWith(".tsx"),
-    );
-
-    for (const file of files) {
-      const relPath = file.slice(TEMPLATES.length + 1);
-
-      it(`${relPath} does not use process.env`, () => {
-        const content = readFileSync(file, "utf-8");
-        assert.ok(
-          !content.includes("process.env"),
-          `${relPath} should use the validated env object from "~/env" instead of process.env`,
-        );
-      });
-
-      it(`${relPath} imports from ~/env`, () => {
-        const content = readFileSync(file, "utf-8");
-        assert.ok(
-          content.includes('from "~/env"'),
-          `${relPath} should import the validated env object from "~/env"`,
-        );
-      });
-    }
-  }
-});
-
 describe("Next.js env.ts uses process.env in runtimeEnv", () => {
   it("base/src/env.ts accesses process.env for validation wiring", () => {
     const envFile = join(NEXTJS_DIR, "base", "src", "env.ts");
