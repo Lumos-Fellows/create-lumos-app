@@ -51,6 +51,11 @@ export function generateReadme(projectPath: string, options: PackageOptions) {
     }
   }
 
+  let styling = "NativeWind (Tailwind CSS)";
+  if (isNext)
+    styling = shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4";
+  else if (rnr) styling += " + React Native Reusables";
+
   const content = `# ${resolvedName}
 
 Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-app).
@@ -59,7 +64,7 @@ Created with [create-lumos-app](https://github.com/lumos-fellows/create-lumos-ap
 
 - **Framework**: ${isNext ? "Next.js (App Router)" : "Expo (React Native)"}
 - **Language**: TypeScript
-- **Styling**: ${isNext ? (shadcn ? "Tailwind CSS v4 + shadcn/ui" : "Tailwind CSS v4") : rnr ? "NativeWind (Tailwind CSS) + React Native Reusables" : "NativeWind (Tailwind CSS)"}
+- **Styling**: ${styling}
 - **Linting**: Biome + [anti-slop](https://github.com/dmmulroy/anti-slop) (Oxlint)
 - **Formatting**: Biome
 ${integrations.length > 0 ? `- **Integrations**: ${integrations.join(", ")}` : ""}

@@ -53,7 +53,12 @@ describe("Anti-slop integration", () => {
       (name) => `anti-slop/${name}`,
     );
     assert.equal(enabledRules.length, 15);
-    assert.deepEqual(Object.keys(config.rules).sort(), enabledRules.sort());
+    assert.deepEqual(
+      Object.keys(config.rules)
+        .filter((name) => name.startsWith("anti-slop/"))
+        .sort(),
+      enabledRules.sort(),
+    );
     for (const rule of enabledRules) assert.equal(config.rules[rule], "error");
   });
 

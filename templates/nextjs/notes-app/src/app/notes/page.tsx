@@ -142,7 +142,7 @@ export default function NotesPage() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onBlur={updateNote}
-                placeholder="Start writing..."
+                placeholder="Start writing"
                 className="flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground"
               />
               <div className="flex justify-end">

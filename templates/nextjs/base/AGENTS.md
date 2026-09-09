@@ -9,6 +9,8 @@
 - Integrations must gracefully no-op without environment variables so the app can start before external services are configured.
 - Keep README additions limited to context that cannot be inferred directly from source or configuration. Keep agent guidance focused on constraints, rationale, exceptions, and recurring mistakes.
 
+Keep route folders for Next.js entrypoints and colocated tests. Put shared components in `src/components`, route-private components in `_components`, and domain logic in `src/lib`. Explain each redirect with a nearby `REDIRECT-PURPOSE:` comment.
+
 ## Rules Index
 
 Before starting work, read each rules file whose scope applies to the task. `.agents/rules/` is an organizational convention; do not assume a harness automatically loads its files. When adding, updating, or deleting a rules file, keep this index in sync.

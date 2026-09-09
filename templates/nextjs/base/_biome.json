@@ -6,7 +6,7 @@
       "!.next",
       "!.agents",
       "!.claude/worktrees",
-      "!tools/oxlint/anti-slop"
+      "!tools/oxlint"
     ]
   },
   "assist": {
@@ -29,7 +29,8 @@
         "noUnusedImports": "error"
       },
       "style": {
-        "noProcessEnv": "error"
+        "noProcessEnv": "error",
+        "noNestedTernary": "error"
       }
     }
   },

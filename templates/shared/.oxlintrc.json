@@ -23,10 +23,17 @@
     ".pi/**",
     ".roo/**",
     ".windsurf/**",
-    "tools/oxlint/anti-slop/**"
+    "tools/oxlint/**"
   ],
   "jsPlugins": [
-    { "name": "anti-slop", "specifier": "./tools/oxlint/anti-slop/index.mjs" }
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.mjs"
+    },
+    {
+      "name": "app-quality",
+      "specifier": "./tools/oxlint/app-quality/index.mjs"
+    }
   ],
   "rules": {
     "anti-slop/no-chained-type-assertions": "error",
@@ -43,6 +50,21 @@
     "anti-slop/no-unknown-type-aliases": "error",
     "anti-slop/no-unsafe-dictionary-type": "error",
     "anti-slop/no-widen-then-assert": "error",
-    "anti-slop/require-safety-comment-for-type-assertion": "error"
-  }
+    "anti-slop/require-safety-comment-for-type-assertion": "error",
+    "app-quality/no-eyebrow-before-heading": "error",
+    "app-quality/no-heading-description": "error",
+    "app-quality/no-spinner-only-button": "error",
+    "app-quality/no-placeholder-ellipsis": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "app-quality/no-route-adjacent-helpers": "error",
+        "app-quality/require-redirect-purpose": "error"
+      }
+    }
+  ]
 }

@@ -59,3 +59,31 @@ for (const framework of ["nextjs", "expo"]) {
     }
   });
 }
+
+for (const configPath of [
+  "biome.json",
+  "templates/nextjs/base/_biome.json",
+  "templates/expo/base/_biome.json",
+]) {
+  it(`${configPath} rejects nested ternaries`, () => {
+    const project = mkdtempSync(join(root, ".lint-test-"));
+    try {
+      cpSync(join(root, configPath), join(project, "biome.json"));
+      mkdirSync(join(project, "bin"));
+      writeFileSync(
+        join(project, "bin/code.ts"),
+        "export function label(a: boolean, b: boolean) { return a ? 'a' : b ? 'b' : 'c'; }",
+      );
+      const result = spawnSync(
+        process.execPath,
+        [biome, "lint", "bin/code.ts"],
+        { cwd: project, encoding: "utf8" },
+      );
+      assert.ifError(result.error);
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /noNestedTernary/);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+}

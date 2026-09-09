@@ -18,6 +18,9 @@
       "recommended": true,
       "correctness": {
         "noUnusedImports": "error"
+      },
+      "style": {
+        "noNestedTernary": "error"
       }
     }
   },

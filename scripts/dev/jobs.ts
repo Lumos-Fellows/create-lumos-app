@@ -42,11 +42,8 @@ export class Jobs {
       current.log += `\n${error.message}`;
     });
     child.on("close", (code) => {
-      current.status = this.stopping
-        ? "stopped"
-        : code === 0
-          ? "ready"
-          : "failed";
+      current.status = code === 0 ? "ready" : "failed";
+      if (this.stopping) current.status = "stopped";
       current.log += `\n${current.command}: ${current.status}\n`;
       if (!this.stopping) this.child = null;
     });

@@ -1,5 +1,24 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "extends": ["./templates/shared/.oxlintrc.json"],
-  "ignorePatterns": ["templates/**"]
+  "extends": [
+    "./templates/shared/.oxlintrc.json"
+  ],
+  "ignorePatterns": [
+    "templates/**"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "scripts/oxlint/ast.ts"
+      ],
+      "rules": {
+        "anti-slop/no-runtime-typeof": [
+          "error",
+          {
+            "allowInTypeGuards": true
+          }
+        ]
+      }
+    }
+  ]
 }

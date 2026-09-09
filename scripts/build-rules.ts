@@ -10,7 +10,7 @@ import {
 import { dirname, join } from "node:path";
 
 const pluginSource = "dist/anti-slop-build";
-const pluginDestination = "templates/shared/tools/oxlint/anti-slop";
+const pluginDestination = "templates/shared/tools/oxlint";
 rmSync(pluginSource, { recursive: true, force: true });
 const result = spawnSync("tsc", ["-p", "tsconfig.anti-slop.json"], {
   stdio: "inherit",
@@ -26,15 +26,21 @@ for (const file of readdirSync(pluginSource, {
   encoding: "utf-8",
 })) {
   if (!file.endsWith(".js")) continue;
+  const outputFile = file
+    .replace(/^vendor[\\/]anti-slop[\\/]/, "anti-slop/")
+    .replace(/^scripts[\\/]oxlint[\\/]/, "app-quality/");
   const code = readFileSync(join(pluginSource, file), "utf-8").replace(
     /(from\s+["'][^"']+)\.js(["'])/g,
     "$1.mjs$2",
   );
-  const target = join(pluginDestination, file.replace(/\.js$/, ".mjs"));
+  const target = join(pluginDestination, outputFile.replace(/\.js$/, ".mjs"));
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, code);
 }
 for (const file of ["LICENSE", "README.md"]) {
-  cpSync(join("vendor/anti-slop", file), join(pluginDestination, file));
+  cpSync(
+    join("vendor/anti-slop", file),
+    join(pluginDestination, "anti-slop", file),
+  );
 }
 rmSync(pluginSource, { recursive: true });

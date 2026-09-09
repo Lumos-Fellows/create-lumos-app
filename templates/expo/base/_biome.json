@@ -6,7 +6,7 @@
       "!.expo",
       "!.agents",
       "!.claude/worktrees",
-      "!tools/oxlint/anti-slop"
+      "!tools/oxlint"
     ]
   },
   "assist": {
@@ -32,7 +32,8 @@
         "noUnknownAtRules": "off"
       },
       "style": {
-        "noProcessEnv": "error"
+        "noProcessEnv": "error",
+        "noNestedTernary": "error"
       }
     }
   },

@@ -6,6 +6,7 @@ const config: KnipConfig = {
     "scripts/dev/create.ts",
     "templates/shared/tools/agent-stop.ts",
     "vendor/anti-slop/index.ts",
+    "scripts/oxlint/index.ts",
   ],
   project: [
     "bin/**/*.ts",
