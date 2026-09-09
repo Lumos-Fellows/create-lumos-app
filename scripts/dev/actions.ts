@@ -1,10 +1,10 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import { commandName, projectName } from "./contracts.ts";
-import { listFiles, workspacePath } from "./files.ts";
+import { workspacePath } from "./files.ts";
 
 const manifestSchema = z.object({
   scripts: z.record(z.string(), z.string()).default({}),
@@ -29,11 +29,11 @@ export function projectCommands(workspace: string, name: string) {
   return { directory, manager, commands };
 }
 
-export function deleteProjects(workspace: string) {
-  const projects = listFiles(workspace, "").filter((entry) => entry.directory);
-  for (const project of projects) {
-    rmSync(workspacePath(workspace, project.name), { recursive: true });
-  }
+export function deleteProject(workspace: string, name: string) {
+  const directory = workspacePath(workspace, projectName.parse(name));
+  if (!lstatSync(directory).isDirectory())
+    throw new Error("Select a project directory.");
+  rmSync(directory, { recursive: true });
 }
 
 // Package scripts spawn descendants; stopping only the package manager leaves servers alive.

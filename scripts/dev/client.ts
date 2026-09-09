@@ -53,7 +53,7 @@ const confirmation = deleteDialog;
 function updateControls() {
   const busy = pending || running;
   submitButton.disabled = busy;
-  button("delete-all").disabled = busy || !selectedProject;
+  button("delete-project").disabled = busy || !selectedProject;
   button("start-dev").disabled =
     busy ||
     !availableCommands.some((name) => name === "dev" || name === "start");
@@ -105,11 +105,19 @@ async function mutate(path: string, method: string, input?: CommandInput) {
   }
 }
 
-button("delete-all").addEventListener("click", () => confirmation.showModal());
+let projectToDelete = "";
+button("delete-project").addEventListener("click", () => {
+  projectToDelete = selectedProject;
+  element("delete-heading").textContent = `Delete ${projectToDelete}?`;
+  confirmation.showModal();
+});
 button("cancel-delete").addEventListener("click", () => confirmation.close());
 button("confirm-delete").addEventListener("click", () => {
   confirmation.close();
-  void mutate("/api/projects", "DELETE");
+  void mutate(
+    `/api/project?project=${encodeURIComponent(projectToDelete)}`,
+    "DELETE",
+  );
 });
 button("start-dev").addEventListener("click", () => {
   void mutate("/api/commands", "POST", {

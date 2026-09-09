@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { deleteProjects, projectCommands } from "./actions.ts";
+import { deleteProject, projectCommands } from "./actions.ts";
 import {
   type ApiResponse,
   commandInput,
@@ -120,10 +120,16 @@ const server = createServer(async (request, response) => {
         });
         return;
       }
-      if (request.method === "DELETE" && url.pathname === "/api/projects") {
-        deleteProjects(workspace);
-        jobs.current = null;
-        json(200, { projects: [], job: null });
+      if (request.method === "DELETE" && url.pathname === "/api/project") {
+        const name = projectName.parse(url.searchParams.get("project"));
+        deleteProject(workspace, name);
+        if (jobs.current?.name === name) jobs.current = null;
+        json(200, {
+          projects: listFiles(workspace, "")
+            .filter((entry) => entry.directory)
+            .map((entry) => entry.name),
+          job: jobs.current,
+        });
         return;
       }
       if (request.method === "POST" && url.pathname === "/api/commands") {

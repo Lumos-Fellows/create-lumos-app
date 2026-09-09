@@ -25,7 +25,7 @@
       <p id="error" role="alert"></p>
     </section>
     <section class="card explorer" aria-labelledby="files-heading">
-      <div class="toolbar"><h2 id="files-heading">Explore files</h2><div class="tools"><select id="projects" aria-label="Project to explore"><option value="">No projects yet</option></select><button id="refresh" type="button">Refresh</button><button id="delete-all" type="button" class="danger" disabled>Delete all projects</button></div></div>
+      <div class="toolbar"><h2 id="files-heading">Explore files</h2><div class="tools"><select id="projects" aria-label="Project to explore"><option value="">No projects yet</option></select><button id="refresh" type="button">Refresh</button><button id="delete-project" type="button" class="danger" disabled>Delete project</button></div></div>
       <p class="muted small location" id="location">Your generated projects will appear here.</p>
       <div class="browser"><nav id="tree" aria-label="File tree"><p class="empty">Create your first project to explore its files.</p></nav><div class="preview"><div id="file-path">File preview</div><pre id="file-content">Select a file to see its contents.</pre></div></div>
     </section>
@@ -39,9 +39,9 @@
     </section>
   </main>
   <dialog id="delete-dialog" aria-labelledby="delete-heading">
-    <h2 id="delete-heading">Delete all projects?</h2>
-    <p>All projects in .playground/ will be permanently deleted.</p>
-    <div class="tools"><button id="cancel-delete" type="button">Cancel</button><button id="confirm-delete" class="danger" type="button">Delete all projects</button></div>
+    <h2 id="delete-heading">Delete project?</h2>
+    <p>This project and all its files will be permanently deleted.</p>
+    <div class="tools"><button id="cancel-delete" type="button">Cancel</button><button id="confirm-delete" class="danger" type="button">Delete project</button></div>
   </dialog>
 </body>
 </html>

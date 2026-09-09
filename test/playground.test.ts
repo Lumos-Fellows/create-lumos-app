@@ -298,7 +298,10 @@ test("project commands stream output, stop the server tree, and gate deletion", 
   const port = job.log.match(/PORT=(\d+)/)?.[1];
   const appUrl = `http://127.0.0.1:${port}`;
   assert.equal(await (await fetch(appUrl)).text(), "works");
-  assert.equal((await api("/api/projects", "DELETE")).status, 409);
+  assert.equal(
+    (await api("/api/project?project=commands", "DELETE")).status,
+    409,
+  );
   assert.equal(
     (await api("/api/commands", "POST", { name: "commands", command: "lint" }))
       .status,
@@ -313,6 +316,9 @@ test("project commands stream output, stop the server tree, and gate deletion", 
     202,
   );
   await waitForJob((_log, status) => status === "failed");
+  const otherProject = join(workspace, "keep-project");
+  mkdirSync(otherProject);
+  writeFileSync(join(otherProject, "keep.txt"), "keep");
   const outside = join(root, "keep");
   mkdirSync(outside);
   writeFileSync(join(outside, "keep.txt"), "keep");
@@ -322,12 +328,22 @@ test("project commands stream output, stop the server tree, and gate deletion", 
     (await fetch(`${origin}/api/projects`, { method: "DELETE" })).status,
     403,
   );
+  assert.equal((await api("/api/project", "DELETE")).status, 400);
+  assert.equal((await api("/api/projects", "DELETE")).status, 404);
+  assert.equal(
+    (await api("/api/project?project=../keep", "DELETE")).status,
+    400,
+  );
   assert.equal(existsSync(project), true);
-  assert.equal((await api("/api/projects", "DELETE")).status, 200);
+  assert.equal(
+    (await api("/api/project?project=commands", "DELETE")).status,
+    200,
+  );
   assert.equal(existsSync(join(outside, "keep.txt")), true);
   assert.equal(existsSync(project), false);
-  assert.deepEqual(await (await api("/api/state")).json(), {
-    projects: [],
-    job: null,
-  });
+  assert.equal(existsSync(join(otherProject, "keep.txt")), true);
+  const remaining = stateSchema.parse(await (await api("/api/state")).json());
+  assert.equal(remaining.projects.includes("commands"), false);
+  assert.equal(remaining.projects.includes("keep-project"), true);
+  assert.equal(remaining.job, null);
 });
