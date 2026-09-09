@@ -208,7 +208,10 @@ export async function setupPackages(
     ...pkg.scripts,
     format: "biome format --write .",
     lint: "biome check --error-on-warnings . && oxlint .",
-    typecheck: "tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json",
+    typecheck:
+      framework === "nextjs"
+        ? "next typegen && tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json"
+        : "tsc --noEmit && tsc --noEmit -p tsconfig.tooling.json",
     verify: "tsx tools/verify.ts",
   };
 

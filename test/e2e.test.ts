@@ -8,7 +8,7 @@ import { claudeSettingsSchema } from "./helpers/config.ts";
  */
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -663,6 +663,41 @@ describe("e2e scaffolding", {
               );
             }
           });
+
+          if (options.framework === "nextjs") {
+            it("typechecks fresh route helpers and rejects nonexistent routes", () => {
+              const fixture = join(targetDir, "src", "route-types-check.ts");
+              try {
+                writeFileSync(fixture, 'export type Route = PageProps<"/">;\n');
+                execFileSync(options.packageManager, ["run", "typecheck"], {
+                  cwd: targetDir,
+                  stdio: "pipe",
+                  shell: process.platform === "win32",
+                });
+                writeFileSync(
+                  fixture,
+                  'export type Route = PageProps<"/does-not-exist">;\n',
+                );
+                const result = spawnSync(
+                  options.packageManager,
+                  ["run", "typecheck"],
+                  {
+                    cwd: targetDir,
+                    encoding: "utf8",
+                    shell: process.platform === "win32",
+                  },
+                );
+                assert.ifError(result.error);
+                assert.notEqual(result.status, 0);
+                assert.match(
+                  result.stdout + result.stderr,
+                  /does-not-exist.*does not satisfy the constraint/,
+                );
+              } finally {
+                rmSync(fixture, { force: true });
+              }
+            });
+          }
 
           it("passes the generated Biome and anti-slop lint script", () => {
             // Isolate Oxlint from the parent repo's test-*-e2e gitignore entry.
