@@ -6,6 +6,6 @@
 - Use kebab-case for Expo file names, except names required by Expo Router and harness entry points such as `AGENTS.md` and `CLAUDE.md`.
 - Generate shared instructions in `AGENTS.md` and `.agents/rules/`, with a `CLAUDE.md` import. Keep universal constraints in `AGENTS.md` and give every detailed rule an explicit reading trigger.
 - When adding an integration rule, condition its index entry on the same integration flag. Check both enabled and disabled output for missing or stale links.
-- Keep verification in package scripts that any harness or developer can run. Claude hooks should delegate to those scripts and translate failures into Claude's blocking exit status.
+- Keep verification in package scripts that any harness or developer can run. Codex and Claude hooks must share an entrypoint, delegate to package scripts, and translate failures into their blocking exit status.
 
 - Typecheck tooling as well as app code. Keep JavaScript only where a tool needs it, and enable `checkJs` with typed JSDoc at external boundaries.

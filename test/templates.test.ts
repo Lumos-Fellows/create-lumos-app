@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { claudeSettingsSchema } from "./helpers/config.ts";
 /**
  * Unit tests for template file correctness.
  *
  */
 
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -256,90 +255,6 @@ describe("Shared Claude worktree include copies local generated-project config",
           cwd: projectPath,
         }),
       );
-    } finally {
-      rmSync(projectPath, { recursive: true, force: true });
-    }
-  });
-});
-
-describe("Generated Claude Stop hook", () => {
-  const hookPath = join(
-    TEMPLATES,
-    "shared",
-    ".claude",
-    "hooks",
-    "stop-checks.sh",
-  );
-
-  it("delegates to verify and blocks when that script fails", () => {
-    const projectPath = mkdtempSync(
-      join(tmpdir(), "create-lumos-app-hook-lint-"),
-    );
-    try {
-      mkdirSync(join(projectPath, "node_modules"));
-      writeFileSync(
-        join(projectPath, "package.json"),
-        JSON.stringify({
-          scripts: {
-            verify:
-              "node -e \"require('node:fs').writeFileSync('verify-ran', 'yes'); process.exit(1)\"",
-          },
-        }),
-      );
-      const result = spawnSync("sh", [hookPath], {
-        cwd: projectPath,
-        encoding: "utf-8",
-      });
-      assert.ifError(result.error);
-      assert.equal(result.status, 2, result.stdout + result.stderr);
-      assert.ok(existsSync(join(projectPath, "verify-ran")));
-      assert.match(result.stderr, /verify/);
-    } finally {
-      rmSync(projectPath, { recursive: true, force: true });
-    }
-  });
-
-  it("is referenced by the repo and shared template settings", () => {
-    for (const [settingsPath, command] of [
-      [
-        join(TEMPLATES, "..", ".claude", "settings.json"),
-        "sh templates/shared/.claude/hooks/stop-checks.sh",
-      ],
-      [
-        join(TEMPLATES, "shared", ".claude", "settings.json"),
-        "sh .claude/hooks/stop-checks.sh",
-      ],
-    ]) {
-      const settings = claudeSettingsSchema.parse(
-        JSON.parse(readFileSync(settingsPath, "utf-8")),
-      );
-      assert.equal(settings.hooks.Stop[0].hooks[0].command, command);
-    }
-  });
-
-  it("skips cleanly before dependencies are installed in a fresh worktree", () => {
-    const projectPath = mkdtempSync(join(tmpdir(), "create-lumos-app-hook-"));
-    const packageJsonPath = join(projectPath, "package.json");
-    const packageJson = `${JSON.stringify({
-      name: "hook-test",
-      scripts: {
-        format: "biome format --write .",
-        lint: "biome check .",
-        typecheck: "tsc --noEmit",
-      },
-    })}\n`;
-
-    try {
-      writeFileSync(packageJsonPath, packageJson);
-      writeFileSync(join(projectPath, "pnpm-lock.yaml"), "\n");
-
-      execFileSync("sh", [hookPath], {
-        cwd: projectPath,
-        encoding: "utf-8",
-        stdio: "pipe",
-      });
-
-      assert.equal(readFileSync(packageJsonPath, "utf-8"), packageJson);
     } finally {
       rmSync(projectPath, { recursive: true, force: true });
     }

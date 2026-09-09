@@ -15,7 +15,7 @@
     "src/**/*.ts",
     "scripts/**/*.ts",
     "test/**/*.ts",
-    "templates/shared/tools/verify.ts",
+    "templates/shared/tools/**/*.ts",
     "vendor/anti-slop/**/*.ts"
   ]
 }

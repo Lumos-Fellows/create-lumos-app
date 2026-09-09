@@ -303,7 +303,7 @@ describe("e2e scaffolding", {
             );
             assert.equal(
               settings.hooks.Stop[0].hooks[0].command,
-              "sh .claude/hooks/stop-checks.sh",
+              'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); cd "$root" && bash tools/agent-stop.sh',
             );
           });
 

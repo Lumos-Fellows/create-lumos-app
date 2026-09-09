@@ -13,7 +13,7 @@
     "*.js",
     "*.mjs",
     "*.d.ts",
-    "tools/verify.ts"
+    "tools/**/*.ts"
   ],
   "exclude": [
     "node_modules",
