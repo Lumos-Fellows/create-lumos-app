@@ -22,7 +22,8 @@ const nextjsDeps: DependencyCatalog = {
     devDeps: [],
   },
   sentry: {
-    deps: ["@sentry/nextjs"],
+    // The template uses v10 config exports and sendDefaultPii semantics.
+    deps: ["@sentry/nextjs@10"],
     devDeps: [],
   },
 };
