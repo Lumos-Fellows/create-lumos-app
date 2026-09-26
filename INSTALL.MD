@@ -2,117 +2,70 @@
 
 Give your agent this file or its GitHub link, then say:
 
-> Follow INSTALL.MD to create an app for me. Ask me about the app, install any
-> missing prerequisites, and get it running locally.
-
-You only need your coding agent set up with access to a local terminal and the
-internet. It will handle the steps below. A service account is not required to
-run the starter app.
+> Follow INSTALL.MD to create an app for me. Ask me what I need, install the
+> required tools, and get the app running locally.
 
 ## Instructions for the agent
 
-Complete setup, rather than only returning commands. Use the repository checkout
-the user provided. If they provided a GitHub link, clone that repository and use
-the branch or commit in their link. This keeps setup aligned with the templates
-they selected, including changes that are not published to npm yet.
+Assume the user has only their coding agent set up. Perform setup through your
+local terminal with internet access.
 
 ### 1. Ask about the app
 
-Use answers already provided. Ask the remaining questions together in plain
-language:
+Use answers already provided. Ask the remaining questions together:
 
-- What should the app do?
-- What should it be called, and where should its folder go?
-- Is it a website or an iOS/Android app? Recommend a website if they are unsure.
-- Do they want a working Notes demo or an empty starting point? This choice is
-  available for websites; mobile apps use the default starter.
-- Do they need a database and sign-in, usage analytics, or error reporting now?
-  Explain these as optional services. Leave them off if the user is unsure.
+- What should the app do, what is its name, and where should it go?
+- Website (Next.js) or iOS/Android (Expo)? Recommend a website if unsure.
+- For websites, Notes demo or empty starter?
+- Include database/sign-in helpers (Supabase), analytics (PostHog), or error
+  reporting (Sentry)? Leave these off if unsure.
 
-Translate their answers into installer choices:
+Default to pnpm and the offered UI components. Skip developer skills unless
+requested. Create a new app folder outside the installer repository; preserve
+existing files.
 
-| Choice | Installer setting |
-| --- | --- |
-| Website | Next.js |
-| iOS/Android app | Expo |
-| Notes demo / empty website | Basic Notes App / Bare |
-| Database and sign-in helpers | Supabase |
-| Usage analytics | PostHog |
-| Error reporting | Sentry |
+### 2. Install prerequisites
 
-Use pnpm and include the offered UI components unless the user prefers otherwise.
-Skip optional developer skills unless requested. Choose a folder name with
-lowercase letters, numbers, and hyphens, starting with a letter or number.
-Create the app outside the installer repository, in a new folder. Do not use
-`.` or overwrite an existing project.
+Detect the operating system and installed tools. **Install missing Node.js,
+npm, Git, and pnpm yourself.** Use the computer's package manager or official
+installers. Choose a supported Node.js LTS version that satisfies the repository's
+`engines.node`; Node.js includes npm. Use the pnpm version in `packageManager`.
 
-### 2. Prepare the computer
+Execute the installation commands and confirm each tool runs in your terminal.
+Ask the user to act only when blocked by required OS authentication or an
+installer step you cannot control, then resume setup.
 
-Check the operating system and whether Node.js, npm, Git, and pnpm are available.
-Do not assume that installing a coding agent installed these tools.
+Use the supplied checkout, or clone the linked repository and select the branch
+or commit from the link. Read its `AGENTS.md` before proceeding.
 
-- Use an existing Node.js version if it satisfies this checkout's
-  `package.json` `engines.node`. For a fresh installation, use Node.js 24 LTS
-  from the [official Node.js download page](https://nodejs.org/en/download),
-  which includes npm.
-- Install missing Git using the [official Git installation instructions](https://git-scm.com/install/).
-- Install the pnpm version specified by this checkout's `packageManager` field.
-  For this checkout, use `npm install --global pnpm@10.29.3` if pnpm is missing.
-  See the [pnpm installation instructions](https://pnpm.io/installation) if the
-  computer requires a different installation method.
+### 3. Create the app
 
-Use the computer's existing installation method when possible. If an installer
-requires a user action you cannot perform, give that one step, then continue
-afterward. Recheck tool versions in the terminal that will run setup.
-
-### 3. Build and run the installer
-
-Read the checkout's `AGENTS.md`. From the installer repository, run:
+From the installer repository, run:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
 ```
 
-Record the absolute path to `dist/bin/cli.js`. Switch to the parent folder where
-the user wants their app, then run the built CLI in an interactive terminal:
+From the user's chosen parent folder, run the built CLI in an interactive
+terminal. Substitute its absolute path and the chosen app name:
 
 ```sh
 node "/absolute/path/to/create-lumos-app/dist/bin/cli.js" my-app
 ```
 
-Replace the path and `my-app` with the actual values. Answer each prompt from
-the user's choices. The project name is the only positional argument; do not
-invent flags such as `--framework` or pipe a fixed answer list into the prompts.
-If your terminal tool cannot interact with prompts, have the user run this
-command in their terminal, then resume setup when it finishes.
+Use lowercase letters, numbers, and hyphens for the name, starting with a letter
+or number. Answer the prompts
+from the user's choices. The CLI accepts only the project name as an argument;
+other choices use prompts. Resolve installation failures before continuing.
+If Git needs a commit identity, ask for the user's name and email and configure
+it only in the generated app.
 
-Wait for installation to finish and inspect errors or warnings. Do not treat
-an existing folder as proof that setup succeeded. If a run fails, diagnose it
-before retrying; do not delete the folder without the user's approval.
+### 4. Verify and open
 
-### 4. Verify and open the app
+Read the generated app's `AGENTS.md` and `README.md`. Follow them to run checks,
+resolve failures, start the app, and verify its preview. Optional service
+credentials can wait; store them only in the app's ignored environment file.
 
-Work from the generated app folder and read its `AGENTS.md` and `README.md`.
-Keep service credentials in its ignored `.env.local`, never in chat or source
-control. Selected integrations can remain unconfigured for the first local run;
-connecting real accounts is a separate step. Adding Supabase helpers does not
-create the user's application database schema or a complete sign-in flow.
-
-Run `pnpm verify` and resolve setup failures before claiming success. If the user
-chose npm, use `npm run verify` instead. If Git reports a missing commit identity,
-ask for the user's name and email before configuring them for this app only.
-
-For a website, start `pnpm dev` (or `npm run dev`). Open the URL printed by the
-server and confirm that the starter page loads without a runtime error. For the
-Notes demo, also check that a note persists after a reload.
-
-For Expo, start `npx expo start` and use the terminal's preview options. Confirm
-a browser preview if available. A running development server alone does not
-verify a native app: report any device, emulator, or development-build setup
-still needed before testing on iOS or Android.
-
-Leave the development server running. Tell the user the app's folder, how to
-open it, how to start it again, and any remaining setup. Have them open the
-generated folder in their coding agent for further work. Distinguish a working
-starter from the features they still need to build.
+Leave the server running and give the user the app folder, preview URL, and
+restart command. Report any remaining setup, including untested native previews.
