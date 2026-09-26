@@ -9,6 +9,7 @@ import { claudeSettingsSchema } from "./helpers/config.ts";
 
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -168,7 +169,7 @@ const cases: ScaffoldCase[] = [
   {
     label: "Next.js (no integrations)",
     options: {
-      name: "test-nextjs-bare-e2e",
+      name: "test-nextjs-bare",
       framework: "nextjs",
       template: "bare",
       packageManager: "pnpm",
@@ -183,7 +184,7 @@ const cases: ScaffoldCase[] = [
   {
     label: "Next.js + all integrations",
     options: {
-      name: "test-nextjs-all-e2e",
+      name: "test-nextjs-all",
       framework: "nextjs",
       template: "bare",
       packageManager: "pnpm",
@@ -198,7 +199,7 @@ const cases: ScaffoldCase[] = [
   {
     label: "Next.js + notes-app template",
     options: {
-      name: "test-nextjs-notes-e2e",
+      name: "test-nextjs-notes",
       framework: "nextjs",
       template: "notes-app",
       packageManager: "pnpm",
@@ -213,7 +214,7 @@ const cases: ScaffoldCase[] = [
   {
     label: "Expo (no integrations)",
     options: {
-      name: "test-expo-bare-e2e",
+      name: "test-expo-bare",
       framework: "expo",
       template: "bare",
       packageManager: "pnpm",
@@ -228,7 +229,7 @@ const cases: ScaffoldCase[] = [
   {
     label: "Expo + all integrations + RNR",
     options: {
-      name: "test-expo-all-e2e",
+      name: "test-expo-all",
       framework: "expo",
       template: "bare",
       packageManager: "pnpm",
@@ -246,6 +247,8 @@ const cases: ScaffoldCase[] = [
 
 // Each scaffold gets its own budget for registry downloads and package installs.
 const CASE_TIMEOUT = 300_000;
+// Hooks and manual verification can overlap in the same checkout.
+const runId = randomUUID();
 
 // Group cases by framework for readable output. Keep nested scaffold, build,
 // and lint processes sequential for stable Node test-runner output.
@@ -265,18 +268,15 @@ describe("e2e scaffolding", {
 }, () => {
   for (const [framework, group] of Object.entries(frameworkGroups)) {
     describe(framework, { concurrency: 1 }, () => {
-      for (const { label, options } of group) {
+      for (const { label, options: baseOptions } of group) {
         describe(label, { concurrency: 1, timeout: CASE_TIMEOUT }, () => {
+          const options = {
+            ...baseOptions,
+            name: `${baseOptions.name}-${runId}-e2e`,
+          };
           const targetDir = projectDir(options.name);
 
-          // clean slate before and after
-          function cleanup() {
-            if (existsSync(targetDir)) {
-              rmSync(targetDir, { recursive: true, force: true });
-            }
-          }
-          cleanup();
-          after(cleanup);
+          after(() => rmSync(targetDir, { recursive: true, force: true }));
 
           it("scaffolds the project", async () => {
             await scaffold(options);

@@ -1,6 +1,7 @@
 # Validation decisions
 
 - Run unit tests before E2E tests so inexpensive failures are caught before scaffolding and dependency installation.
+- Give each E2E run unique project folders so overlapping hooks cannot delete another run's files. Clean up only folders owned by that run.
 - Lint template output after applying overlays: mutually exclusive declarations make some raw templates invalid programs. Cover both sides of conditional integrations.
 - Verify generated instruction links after overlay processing, including optional integration rules. Ensure Claude imports the same `AGENTS.md` used by other harnesses.
 - E2E tests must run the generated typecheck and lint scripts after dependencies and UI components are installed; template-only checks cannot validate downloaded components.
