@@ -10,7 +10,17 @@ type DependencyCatalog = Partial<
 
 const nextjsDeps: DependencyCatalog = {
   shadcn: {
-    deps: ["class-variance-authority"],
+    deps: [
+      "class-variance-authority",
+      "lucide-react",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-label",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-select",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-separator",
+      "tw-animate-css",
+    ],
     devDeps: [],
   },
   supabase: {

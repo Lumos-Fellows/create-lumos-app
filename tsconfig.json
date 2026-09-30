@@ -8,15 +8,24 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "paths": {
+      "~/components/ui/*": [
+        "./templates/nextjs/shadcn/src/components/ui/*.tsx"
+      ],
+      "~/lib/utils": ["./templates/nextjs/base/src/lib/utils.ts"]
+    }
   },
   "include": [
     "bin/**/*.ts",
     "src/**/*.ts",
     "scripts/**/*.ts",
+    "scripts/**/*.tsx",
     "test/**/*.ts",
     "templates/shared/tools/**/*.ts",
     "vendor/anti-slop/**/*.ts",
-    "knip.ts"
+    "knip.ts",
+    "templates/nextjs/shadcn/src/components/ui/**/*.tsx"
   ]
 }

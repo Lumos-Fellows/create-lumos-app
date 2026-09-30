@@ -84,7 +84,7 @@ const server = createServer(async (request, response) => {
       }
       const assets = new Map([
         ["/", [join(directory, "index.html"), "text/html; charset=utf-8"]],
-        ["/style.css", [join(directory, "style.css"), "text/css"]],
+        ["/style.css", [join(repo, "dist/dev/style.css"), "text/css"]],
         ["/client.js", [join(repo, "dist/dev/client.js"), "text/javascript"]],
       ]);
       const asset = assets.get(url.pathname);

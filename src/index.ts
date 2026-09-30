@@ -11,7 +11,6 @@ import { generateReadme } from "./readme.ts";
 import { installRnr } from "./rnr.ts";
 import { assertNodeVersion } from "./runtime.ts";
 import { scaffold } from "./scaffold.ts";
-import { installShadcn } from "./shadcn.ts";
 import { installSkills, selectSkills } from "./skills.ts";
 import { printSuccess } from "./success.ts";
 import { initSupabase } from "./supabase.ts";
@@ -73,12 +72,7 @@ export async function createProject(options: ProjectOptions) {
     await initSupabase(targetDir);
   }
 
-  // 7. Install shadcn/ui components (if opted in)
-  if (options.framework === "nextjs" && options.shadcn) {
-    await installShadcn(targetDir);
-  }
-
-  // 7b. Install React Native Reusables (if opted in)
+  // 7. Install React Native Reusables (if opted in)
   if (options.framework === "expo" && options.rnr) {
     await installRnr(targetDir);
   }

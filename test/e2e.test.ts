@@ -36,9 +36,8 @@ import { OXLINT_VERSION, setupPackages } from "../src/packages.ts";
 import { generateReadme } from "../src/readme.ts";
 import { installRnr } from "../src/rnr.ts";
 import { scaffold } from "../src/scaffold.ts";
-import { installShadcn } from "../src/shadcn.ts";
 import { initSupabase } from "../src/supabase.ts";
-import { projectDir } from "../src/utils.ts";
+import { projectDir, templatesDir } from "../src/utils.ts";
 import { assertAgentGuidance } from "./helpers/agent-guidance.ts";
 import { verifySentryRuntime } from "./helpers/sentry-runtime.ts";
 
@@ -479,18 +478,38 @@ describe("e2e scaffolding", {
           }
 
           if (options.shadcn) {
-            it("installs shadcn/ui components", async () => {
-              await installShadcn(targetDir);
+            it("includes all shadcn/ui source from the template", () => {
               assert.ok(
                 existsSync(join(targetDir, "components.json")),
                 "components.json should exist when shadcn is enabled",
               );
-              assert.ok(
-                existsSync(
-                  join(targetDir, "src", "components", "ui", "button.tsx"),
-                ),
-                "button.tsx should exist when shadcn is enabled",
-              );
+              for (const component of [
+                "button",
+                "card",
+                "input",
+                "label",
+                "badge",
+                "checkbox",
+                "select",
+                "alert-dialog",
+                "separator",
+                "skeleton",
+              ]) {
+                const relative = join(
+                  "src",
+                  "components",
+                  "ui",
+                  `${component}.tsx`,
+                );
+                assert.equal(
+                  readFileSync(join(targetDir, relative), "utf8"),
+                  readFileSync(
+                    join(templatesDir(), "nextjs", "shadcn", relative),
+                    "utf8",
+                  ),
+                  `${component} should match the bundled template source`,
+                );
+              }
             });
           }
 

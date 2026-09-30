@@ -46,6 +46,10 @@ export const entriesSchema = z.array(
 );
 export const errorSchema = z.object({ error: z.string() });
 
+export type ProjectInput = z.infer<typeof projectInput>;
+export type State = z.infer<typeof stateSchema>;
+export type FileEntry = z.infer<typeof entriesSchema>[number];
+
 export type ApiResponse =
   | Job
   | z.infer<typeof commandsSchema>

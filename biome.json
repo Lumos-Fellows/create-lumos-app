@@ -42,5 +42,10 @@
       "knip.ts",
       "templates/shared/tools/**/*.ts"
     ]
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   }
 }
