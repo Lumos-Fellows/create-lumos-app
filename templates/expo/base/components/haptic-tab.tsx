@@ -14,12 +14,16 @@ type StaticTabsScreenOptions = Extract<
 type HapticTabProps = Parameters<
   NonNullable<StaticTabsScreenOptions["tabBarButton"]>
 >[0];
-type PressableProps = ComponentProps<typeof Pressable>;
 
-export function HapticTab(props: HapticTabProps) {
+export function HapticTab({ ref, ...props }: HapticTabProps) {
+  // SAFETY: React Navigation's ref also permits legacy ref values. This native
+  // Pressable only supplies View instances or null, both accepted by that ref.
+  const pressableRef = ref as ComponentProps<typeof Pressable>["ref"];
+
   return (
     <Pressable
-      {...(props as PressableProps)}
+      {...props}
+      ref={pressableRef}
       onPressIn={(ev: GestureResponderEvent) => {
         if (Platform.OS === "ios") {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

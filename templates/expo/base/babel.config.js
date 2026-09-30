@@ -1,5 +1,6 @@
+/** @param {import("@babel/core").ConfigAPI} api */
 module.exports = (api) => {
-  api.cache(true);
+  api.cache.forever();
   return {
     presets: [
       ["babel-preset-expo", { jsxImportSource: "nativewind" }],

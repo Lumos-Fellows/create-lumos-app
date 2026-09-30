@@ -1,27 +1,17 @@
 import "@/global.css";
-// -- SENTRY_START --
-import { env } from "@/env";
-// -- SENTRY_END --
-// -- NO_SENTRY_START --
 // -- POSTHOG_START --
 import { env } from "@/env";
 // -- POSTHOG_END --
-// -- NO_SENTRY_END --
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 // -- SENTRY_START --
-import * as Sentry from "@sentry/react-native";
+import { initSentry } from "@/lib/sentry";
 // -- SENTRY_END --
 // -- POSTHOG_START --
 import { PostHogProvider } from "posthog-react-native";
 // -- POSTHOG_END --
 // -- SENTRY_START --
-if (env.EXPO_PUBLIC_SENTRY_DSN) {
-  Sentry.init({
-    dsn: env.EXPO_PUBLIC_SENTRY_DSN,
-    tracesSampleRate: 1.0,
-  });
-}
+initSentry();
 // -- SENTRY_END --
 
 export default function RootLayout() {

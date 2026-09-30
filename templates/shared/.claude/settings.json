@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); cd \"$root\" && bash tools/agent-stop.sh",
+            "timeout": 1800,
+            "statusMessage": "Running checks"
+          }
+        ]
+      }
+    ]
+  }
+}

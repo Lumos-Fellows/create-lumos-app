@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "*.js",
+    "*.mjs",
+    "*.d.ts",
+    "tools/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tools/oxlint",
+    ".agents/skills",
+    ".claude/skills",
+    ".codex/skills",
+    ".claude/worktrees",
+    "out",
+    "web-build",
+    ".vercel"
+  ]
+}

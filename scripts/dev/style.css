@@ -1,0 +1,16 @@
+@import "../../templates/nextjs/base/src/app/globals.css";
+@source "./**/*.tsx";
+@source "../../templates/nextjs/shadcn/src/components/ui/*.tsx";
+
+@layer base {
+  body {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  pre {
+    tab-size: 2;
+  }
+}

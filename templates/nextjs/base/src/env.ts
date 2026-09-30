@@ -15,8 +15,8 @@ export const env = createEnv({
   },
   client: {
     // -- SUPABASE_START --
-    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
     // -- SUPABASE_END --
     // -- POSTHOG_START --
     NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
