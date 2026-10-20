@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "~/components/navbar";
-import { ThemeProvider } from "./theme-provider";
+import { ThemeProvider } from "~/components/providers/theme-provider";
 import "./globals.css";
 // -- POSTHOG_START --
-import { PostHogProvider } from "./providers";
+import { PostHogProvider } from "~/components/providers/posthog-provider";
 // -- POSTHOG_END --
 
 const inter = Inter({ subsets: ["latin"] });

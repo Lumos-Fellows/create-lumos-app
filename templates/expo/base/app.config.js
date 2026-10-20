@@ -1,7 +1,7 @@
 const config = require("./app.config.values.js");
 
 module.exports = {
-  expo: {
+  expo: /** @satisfies {import("expo/config").ExpoConfig} */ ({
     name: config.name,
     slug: config.slug,
     version: "1.0.0",
@@ -9,7 +9,6 @@ module.exports = {
     icon: "./assets/images/icon.png",
     scheme: config.scheme,
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
     ios: {
       supportsTablet: true,
       bundleIdentifier: config.bundleIdentifier,
@@ -29,5 +28,5 @@ module.exports = {
       "expo-system-ui",
     ],
     experiments: { typedRoutes: true },
-  },
+  }),
 };
