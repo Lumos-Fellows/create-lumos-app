@@ -16,6 +16,7 @@ describe("scaffoldCommand", () => {
     });
 
     assert.equal(cmd, "npx");
+    assert.ok(args.includes("--skip-install"));
     assert.ok(
       args.includes("--disable-git"),
       "create-next-app should not create the initial blank scaffold commit",
@@ -54,6 +55,7 @@ describe("scaffoldCommand", () => {
           "my-app",
           "--template",
           "tabs",
+          "--no-install",
           "--yes",
         ],
       },
@@ -72,6 +74,7 @@ describe("scaffoldCommand", () => {
           "my-app",
           "--template",
           "tabs",
+          "--no-install",
           "--yes",
         ],
       },

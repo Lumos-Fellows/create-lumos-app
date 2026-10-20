@@ -38,6 +38,24 @@ const cases: { name: string; code: string; rule?: string; file?: string }[] = [
     code: '<section>{/* HEADING-DESCRIPTION: Explains a destructive retention policy. */}<h1>Delete account</h1><p className="text-sm text-muted-foreground">Permanently removes saved notes.</p></section>',
   },
   {
+    name: "description override after previous content",
+    code: '<><span>Previous</span>{/* HEADING-DESCRIPTION: Explains a destructive retention policy. */}<h1>Delete account</h1><p className="text-sm text-muted-foreground">Permanently removes saved notes.</p></>',
+  },
+  {
+    name: "description override does not reach past a sibling",
+    code: '<>{/* HEADING-DESCRIPTION: Explains a destructive retention policy. */}<span>Previous</span><h1>Notes</h1><p className="text-sm text-muted-foreground">All your notes</p></>',
+    rule: "no-heading-description",
+  },
+  {
+    name: "eyebrow override after previous content",
+    code: "<><span>Previous</span>{/* EYEBROW_HEADING_OVERRIDE: Distinguishes two account categories. */}<Eyebrow>Personal</Eyebrow><h1>Notes</h1></>",
+  },
+  {
+    name: "eyebrow override does not reach past a sibling",
+    code: "<>{/* EYEBROW_HEADING_OVERRIDE: Distinguishes two account categories. */}<span>Previous</span><Eyebrow>Personal</Eyebrow><h1>Notes</h1></>",
+    rule: "no-eyebrow-before-heading",
+  },
+  {
     name: "runtime result",
     code: '<section><h1>Notes</h1><p className="text-sm text-muted-foreground">{count} saved</p></section>',
   },

@@ -10,6 +10,7 @@ import {
   type Job,
   projectInput,
   projectName,
+  type State,
 } from "./contracts.ts";
 import { listFiles, readFile, workspacePath } from "./files.ts";
 import { Jobs } from "./jobs.ts";
@@ -21,6 +22,15 @@ mkdirSync(workspace, { recursive: true });
 workspacePath(workspace, "");
 const jobs = new Jobs();
 const addressSchema = z.object({ port: z.number() });
+
+function state(): State {
+  return {
+    projects: listFiles(workspace, "")
+      .filter((entry) => entry.directory)
+      .map((entry) => entry.name),
+    job: jobs.current,
+  };
+}
 
 async function readInput(request: IncomingMessage) {
   let body = "";
@@ -57,12 +67,7 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", origin);
     if (request.method === "GET") {
       if (url.pathname === "/api/state") {
-        json(200, {
-          projects: listFiles(workspace, "")
-            .filter((entry) => entry.directory)
-            .map((entry) => entry.name),
-          job: jobs.current,
-        });
+        json(200, state());
         return;
       }
       if (url.pathname === "/api/commands") {
@@ -104,12 +109,7 @@ const server = createServer(async (request, response) => {
       }
       if (request.method === "POST" && url.pathname === "/api/stop") {
         await jobs.stop();
-        json(200, {
-          projects: listFiles(workspace, "")
-            .filter((entry) => entry.directory)
-            .map((entry) => entry.name),
-          job: jobs.current,
-        });
+        json(200, state());
         return;
       }
       // Check the lock after reading input, without yielding between the check and launch.
@@ -124,12 +124,7 @@ const server = createServer(async (request, response) => {
         const name = projectName.parse(url.searchParams.get("project"));
         deleteProject(workspace, name);
         if (jobs.current?.name === name) jobs.current = null;
-        json(200, {
-          projects: listFiles(workspace, "")
-            .filter((entry) => entry.directory)
-            .map((entry) => entry.name),
-          job: jobs.current,
-        });
+        json(200, state());
         return;
       }
       if (request.method === "POST" && url.pathname === "/api/commands") {
@@ -151,7 +146,7 @@ const server = createServer(async (request, response) => {
           ["run", command.command],
           project.directory,
         );
-        json(202, current);
+        json(202, state());
         return;
       }
       if (request.method !== "POST" || url.pathname !== "/api/projects") {
@@ -183,7 +178,7 @@ const server = createServer(async (request, response) => {
         ],
         workspace,
       );
-      json(202, current);
+      json(202, state());
       return;
     }
     json(404, { error: "Not found." });

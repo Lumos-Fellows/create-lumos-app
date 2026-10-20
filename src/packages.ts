@@ -28,11 +28,9 @@ const PNPM_BUILD_CONFIG_SECTIONS = new Set([
 
 export function packageManagerSpec(
   packageManager: PackageManager,
-  version: string | number | null | undefined,
+  version: string | null,
 ) {
-  const normalizedVersion = String(version ?? "")
-    .trim()
-    .split(/\s+/)[0];
+  const normalizedVersion = (version ?? "").trim().split(/\s+/)[0];
 
   return normalizedVersion ? `${packageManager}@${normalizedVersion}` : null;
 }
@@ -143,6 +141,9 @@ export function getBasePackageDeps(framework: Framework) {
         "next-themes",
       ],
       devDeps: [
+        "tailwindcss@4",
+        "@tailwindcss/postcss@4",
+        "postcss@8",
         `@biomejs/biome@${BIOME_VERSION}`,
         `oxlint@${OXLINT_VERSION}`,
         `@oxlint/plugins@${OXLINT_VERSION}`,
@@ -228,8 +229,10 @@ export async function setupPackages(
     pkg.scripts.preinstall = "npx only-allow pnpm";
   }
 
-  // Add Expo-specific scripts
-  if (framework === "expo") {
+  if (framework === "nextjs") {
+    // The templates own Tailwind's PostCSS setup, including Sentry apps.
+    delete pkg.devDependencies?.["@tailwindcss/turbopack"];
+  } else {
     // Our screens replace the upstream starter screens that use these packages.
     for (const name of [
       "expo-splash-screen",

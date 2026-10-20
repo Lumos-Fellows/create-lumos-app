@@ -204,7 +204,9 @@ test("creation failures are reported and existing folders are preserved", async 
   };
   const response = await fetch(`${origin}/api/projects`, options);
   assert.equal(response.status, 202);
-  await response.text();
+  const created = stateSchema.parse(await response.json());
+  assert.equal(created.job?.name, failedName);
+  assert.equal(created.job?.status, "running");
   let state = stateSchema.parse(
     await (await fetch(`${origin}/api/state`)).json(),
   );
@@ -289,11 +291,15 @@ test("project commands stream output, stop the server tree, and gate deletion", 
       .status,
     400,
   );
-  assert.equal(
-    (await api("/api/commands", "POST", { name: "commands", command: "dev" }))
-      .status,
-    202,
-  );
+  const started = await api("/api/commands", "POST", {
+    name: "commands",
+    command: "dev",
+  });
+  assert.equal(started.status, 202);
+  const startedState = stateSchema.parse(await started.json());
+  assert.equal(startedState.job?.command, "dev");
+  assert.equal(startedState.job?.status, "running");
+  assert.ok(startedState.projects.includes("commands"));
   const job = await waitForJob((log) => /PORT=\d+/.test(log));
   const port = job.log.match(/PORT=(\d+)/)?.[1];
   const appUrl = `http://127.0.0.1:${port}`;
@@ -307,7 +313,9 @@ test("project commands stream output, stop the server tree, and gate deletion", 
       .status,
     409,
   );
-  assert.equal((await api("/api/stop", "POST")).status, 200);
+  const stopped = await api("/api/stop", "POST");
+  assert.equal(stopped.status, 200);
+  assert.equal(stateSchema.parse(await stopped.json()).job?.status, "stopped");
   await assert.rejects(fetch(appUrl));
   await waitForJob((_log, status) => status === "stopped");
   assert.equal(
@@ -335,10 +343,11 @@ test("project commands stream output, stop the server tree, and gate deletion", 
     400,
   );
   assert.equal(existsSync(project), true);
-  assert.equal(
-    (await api("/api/project?project=commands", "DELETE")).status,
-    200,
-  );
+  const deleted = await api("/api/project?project=commands", "DELETE");
+  assert.equal(deleted.status, 200);
+  const deletedState = stateSchema.parse(await deleted.json());
+  assert.equal(deletedState.job, null);
+  assert.ok(!deletedState.projects.includes("commands"));
   assert.equal(existsSync(join(outside, "keep.txt")), true);
   assert.equal(existsSync(project), false);
   assert.equal(existsSync(join(otherProject, "keep.txt")), true);

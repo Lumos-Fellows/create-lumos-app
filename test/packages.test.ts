@@ -69,7 +69,10 @@ describe("setupPackages", () => {
       try {
         writeFileSync(
           join(projectPath, "package.json"),
-          JSON.stringify({ scripts: { dev: "next dev" } }),
+          JSON.stringify({
+            scripts: { dev: "next dev" },
+            devDependencies: { "@tailwindcss/turbopack": "^4" },
+          }),
         );
         const calls: { command: string; args: string[] }[] = [];
         await setupPackages(
@@ -101,6 +104,11 @@ describe("setupPackages", () => {
         assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
         assert.equal(pkg.scripts.knip, "knip");
         assert.equal(pkg.engines?.node, NODE_ENGINE);
+        assert.equal(
+          pkg.devDependencies?.["@tailwindcss/turbopack"],
+          undefined,
+        );
+        assert.ok(install.args.includes("@tailwindcss/postcss@4"));
       } finally {
         rmSync(projectPath, { recursive: true, force: true });
       }

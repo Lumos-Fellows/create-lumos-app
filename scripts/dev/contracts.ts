@@ -30,7 +30,7 @@ export const commandInput = z.object({
 });
 export type CommandInput = z.infer<typeof commandInput>;
 export const commandsSchema = z.array(commandName);
-export const jobSchema = z.object({
+const jobSchema = z.object({
   name: z.string(),
   status: z.enum(["running", "ready", "failed", "stopped"]),
   command: z.string(),
@@ -51,7 +51,6 @@ export type State = z.infer<typeof stateSchema>;
 export type FileEntry = z.infer<typeof entriesSchema>[number];
 
 export type ApiResponse =
-  | Job
   | z.infer<typeof commandsSchema>
   | z.infer<typeof stateSchema>
   | z.infer<typeof entriesSchema>

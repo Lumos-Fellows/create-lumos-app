@@ -3,7 +3,6 @@ import { request } from "./api.ts";
 import {
   type CommandInput,
   commandsSchema,
-  jobSchema,
   type ProjectInput,
   type State,
   stateSchema,
@@ -90,13 +89,10 @@ export function usePlayground() {
         headers: { "Content-Type": "application/json" },
         body: input ? JSON.stringify(input) : undefined,
       });
-      if (path === "/api/projects") {
-        const job = jobSchema.parse(await response.json());
-        setSelection(job.name);
-      }
-      const result = await request("/api/state");
-      setState(stateSchema.parse(await result.json()));
+      const result = stateSchema.parse(await response.json());
+      setState(result);
       setRefresh((value) => value + 1);
+      return result;
     } catch (failure) {
       setError(String(failure));
     } finally {
@@ -118,7 +114,10 @@ export function usePlayground() {
     setError,
     selectProject: setSelection,
     refresh: () => setRefresh((value) => value + 1),
-    create: (input: ProjectInput) => mutate("/api/projects", "POST", input),
+    create: async (input: ProjectInput) => {
+      if (await mutate("/api/projects", "POST", input))
+        setSelection(input.name);
+    },
     run: (command: CommandInput["command"]) =>
       mutate("/api/commands", "POST", { name: project, command }),
     stop: () => mutate("/api/stop", "POST"),

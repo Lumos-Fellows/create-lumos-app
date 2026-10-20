@@ -5,12 +5,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type PackageJson, packageJsonSchema } from "./package-json.ts";
 
-const DEBUG_MODE = false;
-
-function debug(...args: string[]) {
-  if (DEBUG_MODE) console.log("[DEBUG]", ...args);
-}
-
 /**
  * Run a command synchronously and return stdout.
  */
@@ -18,7 +12,6 @@ export function exec(
   cmd: string,
   opts: Omit<ExecSyncOptions, "encoding"> = {},
 ) {
-  debug(`exec: ${cmd}`);
   return execSync(cmd, { encoding: "utf-8", stdio: "pipe", ...opts }).trim();
 }
 
@@ -37,22 +30,16 @@ export function run(
       shell: process.platform === "win32",
       ...opts,
     };
-    debug(`run: ${cmd} ${args.join(" ")}`);
-    debug(`  cwd: ${spawnOpts.cwd || process.cwd()}`);
-    debug(`  shell: ${spawnOpts.shell}`);
     const child = spawn(cmd, args, spawnOpts);
     const stderrChunks: Buffer[] = [];
     const stdoutChunks: Buffer[] = [];
     child.stderr?.on("data", (chunk: Buffer) => {
-      debug(`  stderr: ${chunk.toString().trim()}`);
       stderrChunks.push(chunk);
     });
     child.stdout?.on("data", (chunk: Buffer) => {
-      debug(`  stdout: ${chunk.toString().trim()}`);
       stdoutChunks.push(chunk);
     });
     child.on("close", (code) => {
-      debug(`  exit code: ${code}`);
       const stderr = Buffer.concat(stderrChunks).toString().trim();
       const stdout = Buffer.concat(stdoutChunks).toString().trim();
       if (code === 0) resolve(stdout);
@@ -66,7 +53,6 @@ export function run(
       }
     });
     child.on("error", (err) => {
-      debug(`  spawn error: ${err.message}`);
       reject(err);
     });
   });

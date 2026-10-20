@@ -29,6 +29,7 @@ export function scaffoldCommand({
         "--ts",
         pmFlag,
         "--disable-git",
+        "--skip-install",
         "--yes",
       ],
     };
@@ -43,6 +44,7 @@ export function scaffoldCommand({
         scaffoldTarget,
         "--template",
         "tabs",
+        "--no-install",
         "--yes",
       ],
     };
@@ -55,6 +57,7 @@ export function scaffoldCommand({
       scaffoldTarget,
       "--template",
       "tabs",
+      "--no-install",
       "--yes",
     ],
   };
@@ -81,25 +84,18 @@ export async function scaffold(options: ScaffoldOptions) {
 
   const s = p.spinner();
 
-  if (framework === "nextjs") {
-    s.start("Running create-next-app…");
-    const { cmd, args } = scaffoldCommand({
-      framework,
-      packageManager,
-      scaffoldTarget,
-    });
-    await run(cmd, args);
-    s.stop("Next.js project created");
-  } else {
-    s.start("Running create-expo-app…");
-    const { cmd, args } = scaffoldCommand({
-      framework,
-      packageManager,
-      scaffoldTarget,
-    });
-    await run(cmd, args);
-    s.stop("Expo project created");
-  }
+  s.start(
+    framework === "nextjs"
+      ? "Running create-next-app…"
+      : "Running create-expo-app…",
+  );
+  const { cmd, args } = scaffoldCommand({
+    framework,
+    packageManager,
+    scaffoldTarget,
+  });
+  await run(cmd, args);
+  s.stop(`${framework === "nextjs" ? "Next.js" : "Expo"} project created`);
 
   // Move scaffolded files from the temp subdirectory into the current directory
   if (needsTempDir) {

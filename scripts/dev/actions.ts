@@ -3,7 +3,7 @@ import { once } from "node:events";
 import { existsSync, lstatSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
-import { commandName, projectName } from "./contracts.ts";
+import { commandName } from "./contracts.ts";
 import { workspacePath } from "./files.ts";
 
 const manifestSchema = z.object({
@@ -12,7 +12,7 @@ const manifestSchema = z.object({
 });
 
 export function projectCommands(workspace: string, name: string) {
-  const directory = workspacePath(workspace, projectName.parse(name));
+  const directory = workspacePath(workspace, name);
   const manifest = manifestSchema.parse(
     JSON.parse(
       readFileSync(workspacePath(workspace, `${name}/package.json`), "utf8"),
@@ -30,7 +30,7 @@ export function projectCommands(workspace: string, name: string) {
 }
 
 export function deleteProject(workspace: string, name: string) {
-  const directory = workspacePath(workspace, projectName.parse(name));
+  const directory = workspacePath(workspace, name);
   if (!lstatSync(directory).isDirectory())
     throw new Error("Select a project directory.");
   rmSync(directory, { recursive: true });

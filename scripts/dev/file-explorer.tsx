@@ -5,7 +5,6 @@ import { entriesSchema, type FileEntry } from "./contracts.ts";
 
 interface DirectoryProps {
   path: string;
-  open: boolean;
   revision: string;
   selected: string;
   onSelect: (path: string) => void;
@@ -14,7 +13,6 @@ interface DirectoryProps {
 
 function Directory({
   path,
-  open,
   revision,
   selected,
   onSelect,
@@ -22,7 +20,6 @@ function Directory({
 }: DirectoryProps) {
   const [entries, setEntries] = useState<FileEntry[] | null>(null);
   useEffect(() => {
-    if (!open) return;
     const controller = new AbortController();
     setEntries(null);
     void request(
@@ -42,7 +39,7 @@ function Directory({
         }
       });
     return () => controller.abort();
-  }, [path, open, revision, onError]);
+  }, [path, revision, onError]);
   if (!entries)
     return <p className="p-2 text-muted-foreground">Loading files</p>;
   if (!entries.length)
@@ -74,7 +71,7 @@ function Directory({
   );
 }
 
-interface FolderProps extends Omit<DirectoryProps, "open"> {
+interface FolderProps extends DirectoryProps {
   name: string;
 }
 
@@ -86,7 +83,7 @@ function Folder({ name, ...props }: FolderProps) {
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
       <summary className="py-2 whitespace-nowrap">{name}</summary>
-      {open && <Directory {...props} open={open} />}
+      {open && <Directory {...props} />}
     </details>
   );
 }
@@ -132,7 +129,6 @@ export function FileExplorer({
         {project ? (
           <Directory
             path={project}
-            open
             revision={revision}
             selected={selected}
             onSelect={setSelected}

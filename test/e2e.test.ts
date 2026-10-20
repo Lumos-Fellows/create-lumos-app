@@ -364,6 +364,13 @@ describe("e2e scaffolding", {
             );
             assert.equal(pkg.devDependencies?.oxlint, OXLINT_VERSION);
             assert.equal(pkg.scripts.verify, "tsx tools/verify.ts");
+            if (options.framework === "nextjs") {
+              assert.ok(pkg.devDependencies?.["@tailwindcss/postcss"]);
+              assert.equal(
+                pkg.devDependencies?.["@tailwindcss/turbopack"],
+                undefined,
+              );
+            }
             assert.equal(
               pkg.devDependencies?.["@oxlint/plugins"],
               OXLINT_VERSION,

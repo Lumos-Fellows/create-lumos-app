@@ -21,14 +21,13 @@ const externalPaths = [
   ".claude/worktrees",
   "tools/oxlint",
 ];
-const expoJavaScript = new Set([
+const runtimeJavaScript = new Set([
+  "postcss.config.mjs",
   "app.config.js",
   "app.config.values.js",
   "babel.config.js",
   "metro.config.js",
 ]);
-
-const runtimeJavaScript = new Set(["postcss.config.mjs", ...expoJavaScript]);
 
 export function sourceFiles(root: string, repository: boolean) {
   const files: string[] = [];
@@ -67,10 +66,10 @@ export function validateSourceFiles(
     const rawTemplate = repository && /^templates\/(nextjs|expo)\//u.test(file);
     const javascript = /\.[cm]?jsx?$/u.test(file);
     if (javascript) {
-      const allowed = repository
-        ? file.startsWith("templates/expo/base/") &&
-          expoJavaScript.has(file.slice("templates/expo/base/".length))
-        : runtimeJavaScript.has(file);
+      const runtimeFile = repository
+        ? file.replace(/^templates\/(?:nextjs|expo)\/base\//u, "")
+        : file;
+      const allowed = runtimeJavaScript.has(runtimeFile);
       if (!allowed) errors.push(`${file}: use TypeScript for maintained code.`);
       else if (!rawTemplate && !checkedJavaScript.has(join(root, file)))
         errors.push(`${file}: runtime JavaScript must be covered by checkJs.`);

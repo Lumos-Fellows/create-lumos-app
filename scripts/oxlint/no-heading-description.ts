@@ -1,15 +1,14 @@
-import type { ESTree, SourceCode } from "@oxlint/plugins";
+import type { ESTree } from "@oxlint/plugins";
 import { defineRule } from "@oxlint/plugins";
-import { isStringLiteral } from "./ast.ts";
+import {
+  contentChildren,
+  elementName,
+  hasPrecedingComment,
+  isStringLiteral,
+} from "./ast.ts";
 
 const headingOverride = /\bHEADING-DESCRIPTION:\s+\S.{9,}/u;
 const nativeHeading = /^h[1-6]$/u;
-
-function elementName(node: ESTree.JSXElement) {
-  return node.openingElement.name.type === "JSXIdentifier"
-    ? node.openingElement.name.name
-    : null;
-}
 
 function hasStaticClass(node: ESTree.JSXElement, className: string) {
   const classAttribute = node.openingElement.attributes.find(
@@ -27,14 +26,6 @@ function hasStaticClass(node: ESTree.JSXElement, className: string) {
   return classAttribute.value.value.split(/\s+/u).includes(className);
 }
 
-function isLayoutWhitespace(node: ESTree.JSXChild) {
-  return (
-    (node.type === "JSXText" && node.value.trim() === "") ||
-    (node.type === "JSXExpressionContainer" &&
-      node.expression.type === "JSXEmptyExpression")
-  );
-}
-
 function hasRuntimeContent(
   node: ESTree.JSXElement | ESTree.JSXFragment,
 ): boolean {
@@ -46,31 +37,6 @@ function hasRuntimeContent(
       child.expression.type !== "JSXEmptyExpression"
     );
   });
-}
-
-function hasHeadingOverride(
-  sourceCode: SourceCode,
-  container: ESTree.JSXElement | ESTree.JSXFragment,
-  headingIndex: number,
-  heading: ESTree.JSXElement,
-) {
-  const previousContent = container.children
-    .slice(0, headingIndex)
-    .reverse()
-    .find((child) => !isLayoutWhitespace(child));
-  const commentRegionStart =
-    previousContent?.end ??
-    (container.type === "JSXElement"
-      ? container.openingElement.end
-      : container.openingFragment.end);
-  return sourceCode
-    .getAllComments()
-    .some(
-      (comment) =>
-        comment.start >= commentRegionStart &&
-        comment.end <= heading.start &&
-        headingOverride.test(comment.value),
-    );
 }
 
 function isDescriptionForHeading(
@@ -103,22 +69,26 @@ export const noHeadingDescriptionRule = defineRule({
   },
   create(context) {
     function check(node: ESTree.JSXElement | ESTree.JSXFragment) {
-      for (let index = 0; index < node.children.length; index += 1) {
-        const heading = node.children[index];
+      const children = contentChildren(node);
+      for (let index = 0; index < children.length - 1; index += 1) {
+        const heading = children[index];
         if (heading.type !== "JSXElement") continue;
         const headingName = elementName(heading);
         if (
           headingName === null ||
           (!nativeHeading.test(headingName) && headingName !== "CardTitle") ||
-          hasHeadingOverride(context.sourceCode, node, index, heading)
+          hasPrecedingComment(
+            context.sourceCode,
+            node,
+            heading,
+            children[index - 1],
+            headingOverride,
+          )
         ) {
           continue;
         }
 
-        const description = node.children
-          .slice(index + 1)
-          .find((child) => !isLayoutWhitespace(child));
-        if (isDescriptionForHeading(headingName, description)) {
+        if (isDescriptionForHeading(headingName, children[index + 1])) {
           context.report({
             node: heading,
             messageId: "redundantHeadingDescription",
